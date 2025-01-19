@@ -1,0 +1,26 @@
+[0.009s] Invoking command in '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection -- -j16 -l16
+[0.046s] [35m[1mConsolidate compiler generated dependencies of target valve_detection[0m
+[0.075s] [ 50%] [32mBuilding CXX object CMakeFiles/valve_detection.dir/src/valve_detection.cpp.o[0m
+[17.658s] [100%] [32m[1mLinking CXX executable valve_detection[0m
+[20.324s] [100%] Built target valve_detection
+[20.332s] Invoked command in '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --build /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection -- -j16 -l16
+[20.338s] Invoking command in '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection
+[20.343s] -- Install configuration: ""
+[20.343s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/lib/valve_detection/valve_detection
+[20.348s] -- Set runtime path of "/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/lib/valve_detection/valve_detection" to ""
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/ament_index/resource_index/package_run_dependencies/valve_detection
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/ament_index/resource_index/parent_prefix_path/valve_detection
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/environment/ament_prefix_path.sh
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/environment/ament_prefix_path.dsv
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/environment/path.sh
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/environment/path.dsv
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/local_setup.bash
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/local_setup.sh
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/local_setup.zsh
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/local_setup.dsv
+[20.348s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/package.dsv
+[20.349s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/ament_index/resource_index/packages/valve_detection
+[20.349s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/cmake/valve_detectionConfig.cmake
+[20.349s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/cmake/valve_detectionConfig-version.cmake
+[20.349s] -- Installing: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection/share/valve_detection/package.xml
+[20.350s] Invoked command in '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /usr/bin/cmake --install /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection

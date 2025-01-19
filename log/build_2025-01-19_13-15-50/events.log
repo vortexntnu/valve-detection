@@ -1,0 +1,144 @@
+[0.000000] (-) TimerEvent: {}
+[0.000464] (valve_detection) JobQueued: {'identifier': 'valve_detection', 'dependencies': OrderedDict()}
+[0.000501] (valve_detection) JobStarted: {'identifier': 'valve_detection'}
+[0.004441] (valve_detection) JobProgress: {'identifier': 'valve_detection', 'progress': 'cmake'}
+[0.005056] (valve_detection) Command: {'cmd': ['/usr/bin/cmake', '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection', '-DCMAKE_INSTALL_PREFIX=/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/install/valve_detection'], 'cwd': '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'ole'), ('XDG_SESSION_TYPE', 'x11'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/ole'), ('DESKTOP_SESSION', 'pop'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'pop'), ('GTK_MODULES', 'gail:atk-bridge'), ('SYSTEMD_EXEC_PID', '8123'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('ROS_DISTRO', 'humble'), ('GTK_IM_MODULE', 'ibus'), ('LOGNAME', 'ole'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'ole'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('ROS_LOCALHOST_ONLY', '0'), ('WINDOWPATH', '2'), ('PATH', '/opt/ros/humble/bin:/home/ole/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'), ('SESSION_MANAGER', 'local/pop-os:@/tmp/.ICE-unix/3386,unix/pop-os:/tmp/.ICE-unix/3386'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/9ac95097_929c_4812_97a7_0a929b536f8e'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('DISPLAY', ':1'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'pop:GNOME'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'pop'), ('XAUTHORITY', '/run/user/1000/gdm/Xauthority'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('GNOME_TERMINAL_SERVICE', ':1.103'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('SHELL', '/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'pop'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GPG_AGENT_INFO', '/run/user/1000/gnupg/S.gpg-agent:0:1'), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection'), ('LC_ALL', 'en_US.UTF-8'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-pop:/etc/xdg'), ('XDG_DATA_DIRS', '/usr/share/pop:/usr/share/gnome:/home/ole/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[0.016806] (valve_detection) StdoutLine: {'line': b'-- Found ament_cmake: 1.3.11 (/opt/ros/humble/share/ament_cmake/cmake)\n'}
+[0.100016] (-) TimerEvent: {}
+[0.101049] (valve_detection) StdoutLine: {'line': b'-- Found cv_bridge: 3.2.1 (/opt/ros/humble/share/cv_bridge/cmake)\n'}
+[0.119205] (valve_detection) StdoutLine: {'line': b'-- Found rosidl_generator_c: 3.1.6 (/opt/ros/humble/share/rosidl_generator_c/cmake)\n'}
+[0.120520] (valve_detection) StdoutLine: {'line': b'-- Found rosidl_adapter: 3.1.6 (/opt/ros/humble/share/rosidl_adapter/cmake)\n'}
+[0.123714] (valve_detection) StdoutLine: {'line': b'-- Found rosidl_generator_cpp: 3.1.6 (/opt/ros/humble/share/rosidl_generator_cpp/cmake)\n'}
+[0.128879] (valve_detection) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c\n'}
+[0.135859] (valve_detection) StdoutLine: {'line': b'-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp\n'}
+[0.166113] (valve_detection) StdoutLine: {'line': b'-- Found rclcpp: 16.0.11 (/opt/ros/humble/share/rclcpp/cmake)\n'}
+[0.179912] (valve_detection) StdoutLine: {'line': b'-- Found rmw_implementation_cmake: 6.1.2 (/opt/ros/humble/share/rmw_implementation_cmake/cmake)\n'}
+[0.180677] (valve_detection) StdoutLine: {'line': b'-- Found rmw_fastrtps_cpp: 6.2.7 (/opt/ros/humble/share/rmw_fastrtps_cpp/cmake)\n'}
+[0.200183] (-) TimerEvent: {}
+[0.245046] (valve_detection) StdoutLine: {'line': b"-- Using RMW implementation 'rmw_fastrtps_cpp' as default\n"}
+[0.266041] (valve_detection) StdoutLine: {'line': b'-- Found vision_msgs: 4.1.1 (/opt/ros/humble/share/vision_msgs/cmake)\n'}
+[0.284901] (valve_detection) StdoutLine: {'line': b'-- Eigen found (include: /usr/include/eigen3, version: 3.4.0)\n'}
+[0.300435] (-) TimerEvent: {}
+[0.305476] (valve_detection) StdoutLine: {'line': b'-- FLANN found (include: /usr/include, lib: /usr/lib/x86_64-linux-gnu/libflann_cpp.so)\n'}
+[0.400568] (-) TimerEvent: {}
+[0.500864] (-) TimerEvent: {}
+[0.503034] (valve_detection) StdoutLine: {'line': b'-- OpenNI found (version: 1.5.4.0, include: /usr/include/ni, lib: /usr/lib/libOpenNI.so;libusb::libusb)\n'}
+[0.508298] (valve_detection) StdoutLine: {'line': b'-- OpenNI2 found (version: 2.2.0.33, include: /usr/include/openni2, lib: /usr/lib/x86_64-linux-gnu/libOpenNI2.so;libusb::libusb)\n'}
+[0.508500] (valve_detection) StderrLine: {'line': b'\x1b[0m** WARNING ** io features related to pcap will be disabled\x1b[0m\n'}
+[0.601135] (-) TimerEvent: {}
+[0.622165] (valve_detection) StdoutLine: {'line': b'-- Eigen found (include: /usr/include/eigen3, version: 3.4.0)\n'}
+[0.627976] (valve_detection) StdoutLine: {'line': b'-- OpenNI found (version: 1.5.4.0, include: /usr/include/ni, lib: /usr/lib/libOpenNI.so;libusb::libusb)\n'}
+[0.635750] (valve_detection) StdoutLine: {'line': b'-- OpenNI2 found (version: 2.2.0.33, include: /usr/include/openni2, lib: /usr/lib/x86_64-linux-gnu/libOpenNI2.so;libusb::libusb)\n'}
+[0.701231] (-) TimerEvent: {}
+[0.730993] (valve_detection) StdoutLine: {'line': b'-- Found Qhull version 8.0.2\n'}
+[0.801343] (-) TimerEvent: {}
+[0.834803] (valve_detection) StdoutLine: {'line': b'-- OpenNI found (version: 1.5.4.0, include: /usr/include/ni, lib: /usr/lib/libOpenNI.so;libusb::libusb)\n'}
+[0.901569] (-) TimerEvent: {}
+[0.929502] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_COMMON\n'}
+[0.929827] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_KDTREE\n'}
+[0.929935] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_OCTREE\n'}
+[0.930218] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_SEARCH\n'}
+[0.930404] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_SAMPLE_CONSENSUS\n'}
+[0.930633] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_FILTERS\n'}
+[0.930816] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_2D\n'}
+[0.930941] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_GEOMETRY\n'}
+[0.931042] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_IO\n'}
+[0.931271] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_FEATURES\n'}
+[0.931497] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_ML\n'}
+[0.931631] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_SEGMENTATION\n'}
+[0.931874] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_VISUALIZATION\n'}
+[0.932108] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_SURFACE\n'}
+[0.932328] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_REGISTRATION\n'}
+[0.932569] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_KEYPOINTS\n'}
+[0.932791] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_TRACKING\n'}
+[0.933100] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_RECOGNITION\n'}
+[0.933432] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_STEREO\n'}
+[0.933611] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_APPS\n'}
+[0.934164] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_IN_HAND_SCANNER\n'}
+[0.934319] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_MODELER\n'}
+[0.934477] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_POINT_CLOUD_EDITOR\n'}
+[0.934630] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_OUTOFCORE\n'}
+[0.934869] (valve_detection) StdoutLine: {'line': b'-- looking for PCL_PEOPLE\n'}
+[0.935810] (valve_detection) StdoutLine: {'line': b'-- Found pcl_conversions: 2.4.5 (/opt/ros/humble/share/pcl_conversions/cmake)\n'}
+[0.954447] (valve_detection) StdoutLine: {'line': b'-- Found ament_lint_auto: 0.12.11 (/opt/ros/humble/share/ament_lint_auto/cmake)\n'}
+[1.001735] (-) TimerEvent: {}
+[1.028317] (valve_detection) StdoutLine: {'line': b"-- Added test 'cppcheck' to perform static code analysis on C / C++ code\n"}
+[1.028586] (valve_detection) StdoutLine: {'line': b'-- Configured cppcheck include dirs: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/include\n'}
+[1.028672] (valve_detection) StdoutLine: {'line': b'-- Configured cppcheck exclude dirs and/or files: \n'}
+[1.029107] (valve_detection) StdoutLine: {'line': b"-- Added test 'flake8' to check Python code syntax and style conventions\n"}
+[1.030307] (valve_detection) StdoutLine: {'line': b"-- Added test 'lint_cmake' to check CMake code style\n"}
+[1.030814] (valve_detection) StdoutLine: {'line': b"-- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257\n"}
+[1.035014] (valve_detection) StdoutLine: {'line': b"-- Added test 'uncrustify' to check C / C++ code style\n"}
+[1.035430] (valve_detection) StdoutLine: {'line': b'-- Configured uncrustify additional arguments: \n'}
+[1.035719] (valve_detection) StdoutLine: {'line': b"-- Added test 'xmllint' to check XML markup files\n"}
+[1.036363] (valve_detection) StdoutLine: {'line': b'-- Configuring done\n'}
+[1.101863] (-) TimerEvent: {}
+[1.143923] (valve_detection) StdoutLine: {'line': b'-- Generating done\n'}
+[1.155052] (valve_detection) StdoutLine: {'line': b'-- Build files have been written to: /home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection\n'}
+[1.173710] (valve_detection) CommandEnded: {'returncode': 0}
+[1.173989] (valve_detection) JobProgress: {'identifier': 'valve_detection', 'progress': 'build'}
+[1.174600] (valve_detection) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection', '--', '-j16', '-l16'], 'cwd': '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'ole'), ('XDG_SESSION_TYPE', 'x11'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/ole'), ('DESKTOP_SESSION', 'pop'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'pop'), ('GTK_MODULES', 'gail:atk-bridge'), ('SYSTEMD_EXEC_PID', '8123'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('ROS_DISTRO', 'humble'), ('GTK_IM_MODULE', 'ibus'), ('LOGNAME', 'ole'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'ole'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('ROS_LOCALHOST_ONLY', '0'), ('WINDOWPATH', '2'), ('PATH', '/opt/ros/humble/bin:/home/ole/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'), ('SESSION_MANAGER', 'local/pop-os:@/tmp/.ICE-unix/3386,unix/pop-os:/tmp/.ICE-unix/3386'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_TERMINAL_SCREEN', '/org/gnome/Terminal/screen/9ac95097_929c_4812_97a7_0a929b536f8e'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('DISPLAY', ':1'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'pop:GNOME'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'pop'), ('XAUTHORITY', '/run/user/1000/gdm/Xauthority'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('GNOME_TERMINAL_SERVICE', ':1.103'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/opt/ros/humble'), ('SHELL', '/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'pop'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GPG_AGENT_INFO', '/run/user/1000/gnupg/S.gpg-agent:0:1'), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection'), ('LC_ALL', 'en_US.UTF-8'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-pop:/etc/xdg'), ('XDG_DATA_DIRS', '/usr/share/pop:/usr/share/gnome:/home/ole/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/'), ('PYTHONPATH', '/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('VTE_VERSION', '6800'), ('CMAKE_PREFIX_PATH', '/opt/ros/humble')]), 'shell': False}
+[1.201987] (-) TimerEvent: {}
+[1.228067] (valve_detection) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/valve_detection.dir/src/valve_detection.cpp.o\x1b[0m\n'}
+[1.302249] (-) TimerEvent: {}
+[1.402980] (-) TimerEvent: {}
+[1.503564] (-) TimerEvent: {}
+[1.603836] (-) TimerEvent: {}
+[1.704077] (-) TimerEvent: {}
+[1.804436] (-) TimerEvent: {}
+[1.904821] (-) TimerEvent: {}
+[2.005099] (-) TimerEvent: {}
+[2.105432] (-) TimerEvent: {}
+[2.205810] (-) TimerEvent: {}
+[2.306194] (-) TimerEvent: {}
+[2.406447] (-) TimerEvent: {}
+[2.506746] (-) TimerEvent: {}
+[2.607080] (-) TimerEvent: {}
+[2.707335] (-) TimerEvent: {}
+[2.807697] (-) TimerEvent: {}
+[2.908088] (-) TimerEvent: {}
+[3.008453] (-) TimerEvent: {}
+[3.108831] (-) TimerEvent: {}
+[3.209193] (-) TimerEvent: {}
+[3.309455] (-) TimerEvent: {}
+[3.409740] (-) TimerEvent: {}
+[3.510126] (-) TimerEvent: {}
+[3.610380] (-) TimerEvent: {}
+[3.710668] (-) TimerEvent: {}
+[3.811057] (-) TimerEvent: {}
+[3.911321] (-) TimerEvent: {}
+[4.011634] (-) TimerEvent: {}
+[4.112009] (-) TimerEvent: {}
+[4.212296] (-) TimerEvent: {}
+[4.312606] (-) TimerEvent: {}
+[4.412989] (-) TimerEvent: {}
+[4.513279] (-) TimerEvent: {}
+[4.613615] (-) TimerEvent: {}
+[4.713890] (-) TimerEvent: {}
+[4.814172] (-) TimerEvent: {}
+[4.914474] (-) TimerEvent: {}
+[5.004000] (valve_detection) StderrLine: {'line': b'\x1b[01m\x1b[K/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/src/valve_detection.cpp:3:7:\x1b[m\x1b[K \x1b[01;31m\x1b[Kerror: \x1b[m\x1b[Kredefinition of \xe2\x80\x98\x1b[01m\x1b[Kclass DetectionImageProcessor\x1b[m\x1b[K\xe2\x80\x99\n'}
+[5.004169] (valve_detection) StderrLine: {'line': b'    3 | class \x1b[01;31m\x1b[KDetectionImageProcessor\x1b[m\x1b[K : public rclcpp::Node\n'}
+[5.004203] (valve_detection) StderrLine: {'line': b'      |       \x1b[01;31m\x1b[K^~~~~~~~~~~~~~~~~~~~~~~\x1b[m\x1b[K\n'}
+[5.004231] (valve_detection) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/src/valve_detection.cpp:1\x1b[m\x1b[K:\n'}
+[5.004258] (valve_detection) StderrLine: {'line': b'\x1b[01m\x1b[K/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/include/valve_detection/valve_detection.hpp:36:7:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[Kprevious definition of \xe2\x80\x98\x1b[01m\x1b[Kclass DetectionImageProcessor\x1b[m\x1b[K\xe2\x80\x99\n'}
+[5.004296] (valve_detection) StderrLine: {'line': b'   36 | class \x1b[01;36m\x1b[KDetectionImageProcessor\x1b[m\x1b[K : public rclcpp::Node\n'}
+[5.004322] (valve_detection) StderrLine: {'line': b'      |       \x1b[01;36m\x1b[K^~~~~~~~~~~~~~~~~~~~~~~\x1b[m\x1b[K\n'}
+[5.014578] (-) TimerEvent: {}
+[5.114824] (-) TimerEvent: {}
+[5.215169] (-) TimerEvent: {}
+[5.315418] (-) TimerEvent: {}
+[5.415728] (-) TimerEvent: {}
+[5.516104] (-) TimerEvent: {}
+[5.616420] (-) TimerEvent: {}
+[5.716748] (-) TimerEvent: {}
+[5.817146] (-) TimerEvent: {}
+[5.917435] (-) TimerEvent: {}
+[6.017732] (-) TimerEvent: {}
+[6.118087] (-) TimerEvent: {}
+[6.135846] (valve_detection) StderrLine: {'line': b'gmake[2]: *** [CMakeFiles/valve_detection.dir/build.make:76: CMakeFiles/valve_detection.dir/src/valve_detection.cpp.o] Error 1\n'}
+[6.136086] (valve_detection) StderrLine: {'line': b'gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/valve_detection.dir/all] Error 2\n'}
+[6.136326] (valve_detection) StderrLine: {'line': b'gmake: *** [Makefile:146: all] Error 2\n'}
+[6.138892] (valve_detection) CommandEnded: {'returncode': 2}
+[6.142756] (valve_detection) JobEnded: {'identifier': 'valve_detection', 'rc': 2}
+[6.153353] (-) EventReactorShutdown: {}

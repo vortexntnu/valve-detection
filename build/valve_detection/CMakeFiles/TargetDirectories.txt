@@ -1,0 +1,10 @@
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/uninstall.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/valve_detection_uninstall.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/valve_detection.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/test.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/edit_cache.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/rebuild_cache.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/list_install_components.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/install.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/install/local.dir
+/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/build/valve_detection/CMakeFiles/install/strip.dir

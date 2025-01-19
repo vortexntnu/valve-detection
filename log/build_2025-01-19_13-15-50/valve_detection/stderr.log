@@ -1,0 +1,11 @@
+[0m** WARNING ** io features related to pcap will be disabled[0m
+[01m[K/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/src/valve_detection.cpp:3:7:[m[K [01;31m[Kerror: [m[Kredefinition of ‘[01m[Kclass DetectionImageProcessor[m[K’
+    3 | class [01;31m[KDetectionImageProcessor[m[K : public rclcpp::Node
+      |       [01;31m[K^~~~~~~~~~~~~~~~~~~~~~~[m[K
+In file included from [01m[K/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/src/valve_detection.cpp:1[m[K:
+[01m[K/home/ole/Documents/Vortex/ros2_ws/src/valve-detection/include/valve_detection/valve_detection.hpp:36:7:[m[K [01;36m[Knote: [m[Kprevious definition of ‘[01m[Kclass DetectionImageProcessor[m[K’
+   36 | class [01;36m[KDetectionImageProcessor[m[K : public rclcpp::Node
+      |       [01;36m[K^~~~~~~~~~~~~~~~~~~~~~~[m[K
+gmake[2]: *** [CMakeFiles/valve_detection.dir/build.make:76: CMakeFiles/valve_detection.dir/src/valve_detection.cpp.o] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/valve_detection.dir/all] Error 2
+gmake: *** [Makefile:146: all] Error 2
