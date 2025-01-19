@@ -141,6 +141,24 @@ void DetectionImageProcessor::process_and_publish_image()
 
         if (!latest_detections_->detections.empty())
         {
+            // The most centred of the two most likely variables are chosen as a boundingbox.
+            // Calculate distance to center (cx, cy)
+            double cx = camera_info_->k[2];  // k[2] = cx
+            double cy = camera_info_->k[5];  // k[5] = cy
+
+            float dist_first = std::sqrt(std::pow(latest_detections_->detections[0].bbox.center.position.x - cx, 2) + 
+                                        std::pow(latest_detections_->detections[0].bbox.center.position.y - cy, 2));
+
+            float dist_second = std::sqrt(std::pow(latest_detections_->detections[1].bbox.center.position.x - cx, 2) + 
+                                        std::pow(latest_detections_->detections[1].bbox.center.position.y - cy, 2));
+
+            // Swap if the second detection is closer to the center
+            if (dist_first > dist_second) {
+                // Swap the two detections
+                std::swap(latest_detections_->detections[0], latest_detections_->detections[1]);
+            }
+
+
             const auto& first_detection = latest_detections_->detections[0];
             int center_x = static_cast<int>(first_detection.bbox.center.position.x * this->width_scalar_);
             int center_y = static_cast<int>(first_detection.bbox.center.position.y * this->height_scalar_);
