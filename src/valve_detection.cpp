@@ -146,42 +146,13 @@ void DetectionImageProcessor::process_and_publish_image()
             int center_y = static_cast<int>(first_detection.bbox.center.position.y * this->height_scalar_);
             int width = static_cast<int>(first_detection.bbox.size_x);
             int height = static_cast<int>(first_detection.bbox.size_y);
-/*
-            int major_axis = width / 2 - width / 12;
-            int minor_axis = height / 2 - height / 12;
-            int smaller_major_axis = major_axis - major_axis*1 / 12;//12;
-            int smaller_minor_axis = minor_axis - minor_axis*1 / 2;//12;
-*/
+
             int minor_axis = std::min(width, height) / 2 - std::min(width, height) / 12;  // Use the smaller dimension to ensure the circle fits
             int major_axis = std::min(width, height) / 2 - std::min(width, height) / 12;
             int smaller_major_axis = minor_axis - minor_axis * 3 / 4; // 3/4 works  Adjust smaller circle size
             int smaller_minor_axis = minor_axis - minor_axis * 3 / 4; // 3/4 works 
 
-            // Draw the bounding box
-            /*
-            cv::rectangle(cv_image, 
-                        cv::Point(center_x - width / 2, center_y - height / 2),
-                        cv::Point(center_x + width / 2, center_y + height / 2),
-                        cv::Scalar(1.0), 1); // Use 1.0 for line color in depth images
-            */
 
-            // Draw the big ellipse
-            /*
-            cv::ellipse(cv_image,
-                        cv::Point(center_x, center_y),
-                        cv::Size(major_axis, minor_axis),
-                        0, 0, 360,
-                        cv::Scalar(1.0), 1); // Use 1.0 for line color in depth images
-            */
-
-            // Draw the small ellipse
-            /*
-            cv::ellipse(cv_image,
-                        cv::Point(center_x, center_y),
-                        cv::Size(smaller_major_axis, smaller_minor_axis),
-                        0, 0, 360,
-                        cv::Scalar(1.0), 1); // Use 1.0 for line color in depth images
-            */
 
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -213,63 +184,7 @@ void DetectionImageProcessor::process_and_publish_image()
 
             if (points_added && cloud->points.size() > 0)
             {
-/*
-                RCLCPP_INFO(this->get_logger(), "Valid points found for RANSAC: %zu points", cloud->points.size());
 
-                pcl::PointCloud<pcl::PointXYZ>::Ptr filtered_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-                pcl::PointCloud<pcl::PointXYZ>::Ptr plane_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-
-                // Segment the plane
-                pcl::SACSegmentation<pcl::PointXYZ> seg;
-                seg.setOptimizeCoefficients(true);
-                seg.setModelType(pcl::SACMODEL_PLANE);
-                seg.setMethodType(pcl::SAC_RANSAC);
-                seg.setDistanceThreshold(0.01);
-                seg.setInputCloud(cloud);
-                pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients());
-                pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
-                seg.segment(*inliers, *coefficients);
-
-                // Extract the points lying near the detected plane
-                pcl::ExtractIndices<pcl::PointXYZ> extract;
-                extract.setInputCloud(cloud);
-                extract.setIndices(inliers);
-                extract.setNegative(false);
-                extract.filter(*plane_cloud);
-
-                // Fit line to the points
-                Eigen::Vector4f plane_normal;
-                pcl::compute3DCentroid(*plane_cloud, plane_normal);
-
-                // Visualize plane normal
-                geometry_msgs::msg::Vector3 normal_msg;
-                normal_msg.x = plane_normal[0];
-                normal_msg.y = plane_normal[1];
-                normal_msg.z = plane_normal[2];
-                plane_normal_pub_->publish(normal_msg);
-
-                // Create point cloud for line visualization
-                pcl::PointCloud<pcl::PointXYZ>::Ptr line_cloud(new pcl::PointCloud<pcl::PointXYZ>());
-                for (int i = 0; i < 10; ++i)
-                {
-                    pcl::PointXYZ point;
-                    point.x = plane_normal[0] * i;
-                    point.y = plane_normal[1] * i;
-                    point.z = plane_normal[2] * i;
-                    line_cloud->push_back(point);
-                }
-
-                // Publish point cloud
-                sensor_msgs::msg::PointCloud2 line_points_msg;
-                pcl::toROSMsg(*line_cloud, line_points_msg);
-                line_points_pub_->publish(line_points_msg);
-
-                // Publish 3D points near the detected plane
-                sensor_msgs::msg::PointCloud2 plane_cloud_msg;
-                pcl::toROSMsg(*plane_cloud, plane_cloud_msg);
-                near_plane_cloud_pub_->publish(plane_cloud_msg);
-
-*/
 
 
 
