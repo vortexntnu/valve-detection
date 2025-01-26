@@ -5,14 +5,14 @@ DetectionImageProcessor::DetectionImageProcessor()
     : Node("detection_image_processor_node")
 {
     // Create subscriptions with synchronized callbacks
-    camera_info_subscription_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
+    camera_info_subscription_yolo_color_  = this->create_subscription<sensor_msgs::msg::CameraInfo>(
         "/yolov8_encoder/resize/camera_info", 10,
-        std::bind(&DetectionImageProcessor::camera_info_callback, this, std::placeholders::_1));
+        std::bind(&DetectionImageProcessor::camera_info_callback_yolo_colored, this, std::placeholders::_1));
 
     // Create subscriptions with synchronized callbacks
-    camera_info_subscription_yolo_color_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
+    camera_info_subscription_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
         "/zed_node/depth/camera_info", 10,
-        std::bind(&DetectionImageProcessor::camera_info_callback_yolo_colored, this, std::placeholders::_1));
+        std::bind(&DetectionImageProcessor::camera_info_callback, this, std::placeholders::_1));
 
     detections_subscription_ = this->create_subscription<vision_msgs::msg::Detection2DArray>(
         "detections_output", 10,
@@ -22,7 +22,7 @@ DetectionImageProcessor::DetectionImageProcessor()
         "/zed_node/depth/depth_registered", 10,
         std::bind(&DetectionImageProcessor::image_callback, this, std::placeholders::_1));
 
-    processed_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("yolov8_processed_image", 10);
+    processed_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("yolov8_valve_detection_image", 10);
     plane_normal_pub_ = this->create_publisher<geometry_msgs::msg::Vector3>("plane_normal", 10);
     pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("point_cloud", 10);
     line_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("line_pose", 10);
@@ -65,8 +65,9 @@ void DetectionImageProcessor::compute_height_width_scalars()
 {
     if (camera_info_received_ && camera_info_received_yolo_color_)
     {
-        height_scalar_ = static_cast<double>(camera_info_yolo_color_->height) / camera_info_->height;
+        height_scalar_ = static_cast<double>(camera_info_yolo_color_->height -280) / camera_info_->height;
         width_scalar_ = static_cast<double>(camera_info_yolo_color_->width) / camera_info_->width;
+
 
         RCLCPP_INFO(this->get_logger(), "Height scalar: %.3f", height_scalar_);
         RCLCPP_INFO(this->get_logger(), "Width scalar: %.3f", width_scalar_);
@@ -87,9 +88,10 @@ void DetectionImageProcessor::project_pixel_to_3d(int u, int v, float depth, pcl
     double cy = camera_info_->k[5];  // k[5] = cy
 
     // Calculate 3D point coordinates
-    point.x = (u - cx) * depth / fx;
-    point.y = (v - cy) * depth / fy;
-    point.z = depth;
+    // transform from optical to camera frame
+    point.x = depth;
+    point.y = -(u - cx) * depth / fx;
+    point.z = -(v - cy) * depth / fy;
 }
 
 void DetectionImageProcessor::project_3d_to_pixel(float x, float y, float z, int &u, int &v)
@@ -105,8 +107,9 @@ void DetectionImageProcessor::project_3d_to_pixel(float x, float y, float z, int
     double cy = camera_info_->k[5];  // Principal point in y direction
 
     // Project the 3D point to 2D pixel coordinates
-    u = static_cast<int>((x * fx) / z + cx);
-    v = static_cast<int>((y * fy) / z + cy);
+    // transform from camera to optical frame
+    u = static_cast<int>((-y * fx) / x + cx);
+    v = static_cast<int>((-z * fy) / x + cy);
 }
 
 void DetectionImageProcessor::detections_callback(const vision_msgs::msg::Detection2DArray::SharedPtr detections_msg)
@@ -125,7 +128,9 @@ void DetectionImageProcessor::image_callback(const sensor_msgs::msg::Image::Shar
 
 void DetectionImageProcessor::process_and_publish_image()
 {
-    if (!camera_info_received_ || !latest_detections_ || !latest_image_)
+
+    std::string frame = "zed_left_camera_frame";
+    if (!camera_info_received_ || !camera_info_received_yolo_color_ || !latest_detections_ || !latest_image_)
     {
         return;
     }
@@ -134,7 +139,7 @@ void DetectionImageProcessor::process_and_publish_image()
     {
         return;
     }
-
+    latest_detections_->header.frame_id = frame;
     try
     {
         cv::Mat cv_image = cv_bridge::toCvCopy(latest_image_, "32FC1")->image;
@@ -145,50 +150,52 @@ void DetectionImageProcessor::process_and_publish_image()
             // Calculate distance to center (cx, cy)
             double cx = camera_info_->k[2];  // k[2] = cx
             double cy = camera_info_->k[5];  // k[5] = cy
+            if (latest_detections_->detections.size() > 1)
+            {
+                float dist_first = std::sqrt(std::pow(latest_detections_->detections[0].bbox.center.position.x - cx, 2) + 
+                                            std::pow(latest_detections_->detections[0].bbox.center.position.y - cy, 2));
 
-            float dist_first = std::sqrt(std::pow(latest_detections_->detections[0].bbox.center.position.x - cx, 2) + 
-                                        std::pow(latest_detections_->detections[0].bbox.center.position.y - cy, 2));
+                float dist_second = std::sqrt(std::pow(latest_detections_->detections[1].bbox.center.position.x - cx, 2) + 
+                                            std::pow(latest_detections_->detections[1].bbox.center.position.y - cy, 2));
 
-            float dist_second = std::sqrt(std::pow(latest_detections_->detections[1].bbox.center.position.x - cx, 2) + 
-                                        std::pow(latest_detections_->detections[1].bbox.center.position.y - cy, 2));
-
-            // Swap if the second detection is closer to the center
-            if (dist_first > dist_second) {
-                // Swap the two detections
-                std::swap(latest_detections_->detections[0], latest_detections_->detections[1]);
+                // Swap if the second detection is closer to the center
+                if (dist_first > dist_second) {
+                    // Swap the two detections
+                    std::swap(latest_detections_->detections[0], latest_detections_->detections[1]);
+                } 
             }
 
 
             const auto& first_detection = latest_detections_->detections[0];
-            int center_x = static_cast<int>(first_detection.bbox.center.position.x * this->width_scalar_);
-            int center_y = static_cast<int>(first_detection.bbox.center.position.y * this->height_scalar_);
-            int width = static_cast<int>(first_detection.bbox.size_x);
-            int height = static_cast<int>(first_detection.bbox.size_y);
-
-            int minor_axis = std::min(width, height) / 2 - std::min(width, height) / 12;  // Use the smaller dimension to ensure the circle fits
-            int major_axis = std::min(width, height) / 2 - std::min(width, height) / 12;
-            int smaller_major_axis = minor_axis - minor_axis * 3 / 4; // 3/4 works  Adjust smaller circle size
-            int smaller_minor_axis = minor_axis - minor_axis * 3 / 4; // 3/4 works 
-
+          
+            int center_x = static_cast<int>(first_detection.bbox.center.position.x / this->width_scalar_);
+            int center_y = static_cast<int>((first_detection.bbox.center.position.y -140) / this->height_scalar_);
+            int width = static_cast<int>(first_detection.bbox.size_x / this->width_scalar_);
+            int height = static_cast<int>(first_detection.bbox.size_y / this->height_scalar_);
 
 
 
             pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
             bool points_added = false;
 
-            for (int y = center_y - minor_axis; y <= center_y + minor_axis; ++y)
+            for (int y = center_y - (height / 2); y <= center_y + (height / 2); ++y)
             {
-                for (int x = center_x - major_axis; x <= center_x + major_axis; ++x)
+                for (int x = center_x - (width / 2); x <= center_x + (width / 2); ++x)
                 {
                     int dx = x - center_x;
                     int dy = y - center_y;
-                    if (dx * dx / (float)(major_axis * major_axis) + dy * dy / (float)(minor_axis * minor_axis) <= 1.0)
+                    if (dx * dx / (float)((width / 2) * (width / 2)) + dy * dy / (float)((height / 2) * (height / 2)) <= 1.0)
                     {
                         if (y >= 0 && y < cv_image.rows && x >= 0 && x < cv_image.cols)
                         {
                             float depth_value = cv_image.at<float>(y, x);
                             pcl::PointXYZ point;
                             project_pixel_to_3d(x, y, depth_value, point);
+                            // if (y == center_y && x == center_x)
+                            // {
+                            //     RCLCPP_INFO(this->get_logger(), "center 2d point: (%d, %d, %f)", x, y, depth_value);
+                            //     RCLCPP_INFO(this->get_logger(), "Center 3d point: (%.3f, %.3f, %.3f)", point.x, point.y, point.z);
+                            // }
                             if (depth_value > 0) // Check for valid depth
                             {
                                 cloud->points.push_back(point);
@@ -209,6 +216,7 @@ void DetectionImageProcessor::process_and_publish_image()
                 sensor_msgs::msg::PointCloud2 cloud_msg;
                 pcl::toROSMsg(*cloud, cloud_msg);
                 cloud_msg.header = latest_image_->header;
+                cloud_msg.header.frame_id = frame;
                 pointcloud_pub_->publish(cloud_msg);
 
                 pcl::SACSegmentation<pcl::PointXYZ> seg;
@@ -231,7 +239,7 @@ void DetectionImageProcessor::process_and_publish_image()
                     plane_normal_pub_->publish(normal_msg);
 
                     RCLCPP_INFO(this->get_logger(), "RANSAC successful: Plane normal (%.3f, %.3f, %.3f)",
-                                coefficients->values[0], coefficients->values[1], coefficients->values[2]);
+                                 coefficients->values[0], coefficients->values[1], coefficients->values[2]);
 
                     pcl::PointCloud<pcl::PointXYZ>::Ptr near_plane_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
@@ -242,14 +250,6 @@ void DetectionImageProcessor::process_and_publish_image()
                     extract.setNegative(false);  // Select the inliers
                     extract.filter(*near_plane_cloud);
 
-                    // Check if the cloud has points within the threshold
-                    if (near_plane_cloud->points.size() > 0)
-                    {
-                        sensor_msgs::msg::PointCloud2 near_plane_cloud_msg;
-                        pcl::toROSMsg(*near_plane_cloud, near_plane_cloud_msg);
-                        near_plane_cloud_msg.header = latest_image_->header;
-                        near_plane_cloud_pub_->publish(near_plane_cloud_msg);  // Publish near plane cloud
-                    }
 
                     // Now we can use `selectWithinDistance` to select inliers that are within the distance threshold
                     pcl::PointIndices::Ptr selected_inliers(new pcl::PointIndices());
@@ -269,7 +269,7 @@ void DetectionImageProcessor::process_and_publish_image()
                             selected_inliers->indices.push_back(i);
                         }
                     }
-
+                    RCLCPP_INFO(this->get_logger(), "Selected inlier size: %zu", selected_inliers->indices.size());
 
                     // Extract the selected inliers
                     pcl::PointCloud<pcl::PointXYZ>::Ptr final_inliers_cloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -288,10 +288,14 @@ void DetectionImageProcessor::process_and_publish_image()
                             int dy = v - center_y;
 
                             // Check if point is inside the smaller ellipse in image space
-                            if (dx * dx / (float)(smaller_major_axis * smaller_major_axis) + dy * dy / (float)(smaller_minor_axis * smaller_minor_axis) <= 1.0) {
-                                // Point is inside the ellipse and close to the plane, add it to the near_plane_cloud
+                            float a = static_cast<float>(width) / 5.0f;  // Semi-major axis
+                            float b = static_cast<float>(height) / 5.0f; // Semi-minor axis
+
+                            if ((dx * dx) / (a * a) + (dy * dy) / (b * b) <= 1.0f) {
+                                // Point is inside the ellipse, add it to the near_plane_cloud
                                 final_inliers_cloud->points.push_back(cloud->points[idx]);
                             }
+
                         
                     }
 
@@ -303,8 +307,9 @@ void DetectionImageProcessor::process_and_publish_image()
                     if (near_plane_cloud->points.size() > 0)
                     {
                         sensor_msgs::msg::PointCloud2 near_plane_cloud_msg;
-                        pcl::toROSMsg(*near_plane_cloud_copy, near_plane_cloud_msg);
+                        pcl::toROSMsg(*near_plane_cloud, near_plane_cloud_msg);
                         near_plane_cloud_msg.header = latest_image_->header;
+                        near_plane_cloud_msg.header.frame_id = frame;
                         near_plane_cloud_pub_->publish(near_plane_cloud_msg);  // Publish near plane cloud
                     
 
@@ -319,6 +324,7 @@ void DetectionImageProcessor::process_and_publish_image()
 
                         geometry_msgs::msg::PoseStamped line_pose_msg;
                         line_pose_msg.header = latest_image_->header;
+                        line_pose_msg.header.frame_id = frame;
                         line_pose_msg.pose.position.x = centroid[0];
                         line_pose_msg.pose.position.y = centroid[1];
                         line_pose_msg.pose.position.z = centroid[2];
@@ -355,7 +361,7 @@ void DetectionImageProcessor::process_and_publish_image()
                         line_cloud_msg.header = latest_image_->header;
                         line_points_pub_->publish(line_cloud_msg);
 
-                        RCLCPP_INFO(this->get_logger(), "Line points published as PointCloud2.");
+                        // RCLCPP_INFO(this->get_logger(), "Line points published as PointCloud2.");
                     }
                 }
                 else

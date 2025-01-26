@@ -55,9 +55,9 @@ private:
 
     // Stored messages
     sensor_msgs::msg::CameraInfo::SharedPtr camera_info_;
-    bool camera_info_received_;
+    bool camera_info_received_ = false;
     sensor_msgs::msg::CameraInfo::SharedPtr camera_info_yolo_color_;
-    bool camera_info_received_yolo_color_;
+    bool camera_info_received_yolo_color_ = false;
     vision_msgs::msg::Detection2DArray::SharedPtr latest_detections_;
     sensor_msgs::msg::Image::SharedPtr latest_image_;
 
