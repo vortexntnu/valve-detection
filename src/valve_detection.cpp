@@ -28,8 +28,9 @@ DetectionImageProcessor::DetectionImageProcessor()
     line_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("line_pose", 10);
     line_points_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("line_points", 10);
     near_plane_cloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("near_plane_cloud", 10);  
-
 }
+
+Eigen::Vector3f DetectionImageProcessor::filter_direction_ = Eigen::Vector3f(1, 0, 0);
 
 void DetectionImageProcessor::camera_info_callback(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg)
 {
@@ -253,7 +254,7 @@ void DetectionImageProcessor::process_and_publish_image()
 
                     // Now we can use `selectWithinDistance` to select inliers that are within the distance threshold
                     pcl::PointIndices::Ptr selected_inliers(new pcl::PointIndices());
-                    float threshold_distance = 0.03;  // Example threshold (4 cm)
+                    float threshold_distance = 0.02;  // Example threshold (3 cm)
 
                     // Logic for selecting points close to the threshold_distance of the plane.
                     for (size_t i = 0; i < cloud->points.size(); ++i) {
@@ -288,8 +289,8 @@ void DetectionImageProcessor::process_and_publish_image()
                             int dy = v - center_y;
 
                             // Check if point is inside the smaller ellipse in image space
-                            float a = static_cast<float>(width) / 5.0f;  // Semi-major axis
-                            float b = static_cast<float>(height) / 5.0f; // Semi-minor axis
+                            float a = static_cast<float>(width) / 6.0f;  // Semi-major axis
+                            float b = static_cast<float>(height) / 6.0f; // Semi-minor axis
 
                             if ((dx * dx) / (a * a) + (dy * dy) / (b * b) <= 1.0f) {
                                 // Point is inside the ellipse, add it to the near_plane_cloud
@@ -320,7 +321,15 @@ void DetectionImageProcessor::process_and_publish_image()
                         pcl::computeCovarianceMatrixNormalized(*near_plane_cloud, centroid, covariance);
 
                         Eigen::SelfAdjointEigenSolver<Eigen::Matrix3f> eigen_solver(covariance, Eigen::ComputeEigenvectors);
+
                         Eigen::Vector3f line_direction = eigen_solver.eigenvectors().col(2);
+
+                        // Filter the line direction to maintain consistency
+                        if (filter_direction_.dot(line_direction) < 0) {
+                            line_direction = -line_direction; // Flip to maintain consistency
+                        }
+
+                        filter_direction_ = line_direction;
 
                         geometry_msgs::msg::PoseStamped line_pose_msg;
                         line_pose_msg.header = latest_image_->header;

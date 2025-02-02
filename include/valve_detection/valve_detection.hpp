@@ -64,6 +64,9 @@ private:
     // Mutex for thread safety
     std::mutex mutex_;
 
+    // Used for line fitting direction filtering
+    static Eigen::Vector3f filter_direction_;
+
     // Scalars for image resizing
     double height_scalar_;
     double width_scalar_;
