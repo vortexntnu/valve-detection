@@ -2,7 +2,9 @@
 
 
 DetectionImageProcessor::DetectionImageProcessor()
-    : Node("detection_image_processor_node")
+    : Node("detection_image_processor_node"),
+      image_sub_(this, "/zed_node/depth/depth_registered", rmw_qos_profile_default),
+      detections_sub_(this, "detections_output", rmw_qos_profile_default)
 {
     // Create subscriptions with synchronized callbacks
     camera_info_subscription_yolo_color_  = this->create_subscription<sensor_msgs::msg::CameraInfo>(
@@ -13,14 +15,6 @@ DetectionImageProcessor::DetectionImageProcessor()
     camera_info_subscription_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
         "/zed_node/depth/camera_info", 10,
         std::bind(&DetectionImageProcessor::camera_info_callback, this, std::placeholders::_1));
-
-    // detections_subscription_ = this->create_subscription<vision_msgs::msg::Detection2DArray>(
-    //     "detections_output", 10,
-    //     std::bind(&DetectionImageProcessor::detections_callback, this, std::placeholders::_1));
-
-    // image_subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-    //     "/zed_node/depth/depth_registered", 10,
-    //     std::bind(&DetectionImageProcessor::image_callback, this, std::placeholders::_1));
 
     processed_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("yolov8_valve_detection_image", 10);
     plane_normal_pub_ = this->create_publisher<geometry_msgs::msg::Vector3>("plane_normal", 10);
@@ -320,7 +314,7 @@ void DetectionImageProcessor::process_and_publish_image(const sensor_msgs::msg::
                         geometry_msgs::msg::PoseStamped line_pose_msg;
                         line_pose_msg.header.stamp = image->header.stamp;
                         line_pose_msg.header.frame_id = target_frame;
-                        
+
                         line_pose_msg.pose.position.x = centroid[0];
                         line_pose_msg.pose.position.y = centroid[1];
                         line_pose_msg.pose.position.z = centroid[2];
@@ -387,22 +381,14 @@ int main(int argc, char **argv)
 
     auto node = std::make_shared<DetectionImageProcessor>();
 
-    // Use the shared pointer and a proper QoS profile.
-    message_filters::Subscriber<sensor_msgs::msg::Image> image_sub(node, "/zed_node/depth/depth_registered", rmw_qos_profile_default);
-    message_filters::Subscriber<vision_msgs::msg::Detection2DArray> detections_sub(node, "detections_output", rmw_qos_profile_default);
-
-
-    // Define the ExactTime sync policy for an Image and a Detection2DArray.
     typedef message_filters::sync_policies::ExactTime<sensor_msgs::msg::Image, vision_msgs::msg::Detection2DArray> MySyncPolicy;
     
-    // Create the synchronizer with a queue size of 10.
-    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), image_sub, detections_sub);
-
-    // Register the synchronized callback.
-    // (Make sure your DetectionImageProcessor class implements a method with the signature:
-    //   void synchronized_callback(const sensor_msgs::msg::Image::ConstSharedPtr &,
-    //                                const vision_msgs::msg::Detection2DArray::ConstSharedPtr &);
-    sync.registerCallback(std::bind(&DetectionImageProcessor::synchronized_callback, node.get(), std::placeholders::_1, std::placeholders::_2));
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), 
+                                                     node->image_sub_, 
+                                                     node->detections_sub_);
+    
+    sync.registerCallback(std::bind(&DetectionImageProcessor::synchronized_callback, node.get(),
+                                    std::placeholders::_1, std::placeholders::_2));
 
     rclcpp::spin(node);
     rclcpp::shutdown();

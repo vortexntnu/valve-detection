@@ -49,6 +49,9 @@ public:
     DetectionImageProcessor();
     void synchronized_callback(const sensor_msgs::msg::Image::ConstSharedPtr & image,const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
 
+    message_filters::Subscriber<sensor_msgs::msg::Image> image_sub_;
+    message_filters::Subscriber<vision_msgs::msg::Detection2DArray> detections_sub_;
+    
 private:
     // Subscriptions
     rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_subscription_;
