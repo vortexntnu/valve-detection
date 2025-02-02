@@ -14,13 +14,13 @@ DetectionImageProcessor::DetectionImageProcessor()
         "/zed_node/depth/camera_info", 10,
         std::bind(&DetectionImageProcessor::camera_info_callback, this, std::placeholders::_1));
 
-    detections_subscription_ = this->create_subscription<vision_msgs::msg::Detection2DArray>(
-        "detections_output", 10,
-        std::bind(&DetectionImageProcessor::detections_callback, this, std::placeholders::_1));
+    // detections_subscription_ = this->create_subscription<vision_msgs::msg::Detection2DArray>(
+    //     "detections_output", 10,
+    //     std::bind(&DetectionImageProcessor::detections_callback, this, std::placeholders::_1));
 
-    image_subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
-        "/zed_node/depth/depth_registered", 10,
-        std::bind(&DetectionImageProcessor::image_callback, this, std::placeholders::_1));
+    // image_subscription_ = this->create_subscription<sensor_msgs::msg::Image>(
+    //     "/zed_node/depth/depth_registered", 10,
+    //     std::bind(&DetectionImageProcessor::image_callback, this, std::placeholders::_1));
 
     processed_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("yolov8_valve_detection_image", 10);
     plane_normal_pub_ = this->create_publisher<geometry_msgs::msg::Vector3>("plane_normal", 10);
@@ -34,7 +34,6 @@ Eigen::Vector3f DetectionImageProcessor::filter_direction_ = Eigen::Vector3f(1, 
 
 void DetectionImageProcessor::camera_info_callback(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (!camera_info_received_)
     {
         camera_info_ = camera_info_msg;
@@ -49,7 +48,6 @@ void DetectionImageProcessor::camera_info_callback(const sensor_msgs::msg::Camer
 
 void DetectionImageProcessor::camera_info_callback_yolo_colored(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     if (!camera_info_received_yolo_color_)
     {
         camera_info_yolo_color_ = camera_info_msg;
@@ -113,66 +111,53 @@ void DetectionImageProcessor::project_3d_to_pixel(float x, float y, float z, int
     v = static_cast<int>((-z * fy) / x + cy);
 }
 
-void DetectionImageProcessor::detections_callback(const vision_msgs::msg::Detection2DArray::SharedPtr detections_msg)
+void DetectionImageProcessor::synchronized_callback(const sensor_msgs::msg::Image::ConstSharedPtr & image,const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    latest_detections_ = detections_msg;
-    process_and_publish_image();
+
+    RCLCPP_INFO(this->get_logger(), "Synchronized image and detection messages received.");
+
+    process_and_publish_image(image, detections);
 }
 
-void DetectionImageProcessor::image_callback(const sensor_msgs::msg::Image::SharedPtr img_msg)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    latest_image_ = img_msg;
-    process_and_publish_image();
-}
 
-void DetectionImageProcessor::process_and_publish_image()
+void DetectionImageProcessor::process_and_publish_image(const sensor_msgs::msg::Image::ConstSharedPtr & image,const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections)
 {
-
-    std::string frame = "zed_left_camera_frame";
-    if (!camera_info_received_ || !camera_info_received_yolo_color_ || !latest_detections_ || !latest_image_)
+    std::string target_frame = "zed_left_camera_frame";
+    if (!camera_info_received_ || !camera_info_received_yolo_color_)
     {
         return;
     }
 
-    if (latest_detections_->header.stamp != latest_image_->header.stamp)
-    {
-        return;
-    }
-    latest_detections_->header.frame_id = frame;
     try
     {
-        cv::Mat cv_image = cv_bridge::toCvCopy(latest_image_, "32FC1")->image;
+        cv::Mat cv_image = cv_bridge::toCvCopy(image, "32FC1")->image;
 
-        if (!latest_detections_->detections.empty())
+        if (!detections->detections.empty())
         {
+            const auto* first_detection = &detections->detections[0];
             // The most centred of the two most likely variables are chosen as a boundingbox.
             // Calculate distance to center (cx, cy)
             double cx = camera_info_->k[2];  // k[2] = cx
             double cy = camera_info_->k[5];  // k[5] = cy
-            if (latest_detections_->detections.size() > 1)
+            if (detections->detections.size() > 1)
             {
-                float dist_first = std::sqrt(std::pow(latest_detections_->detections[0].bbox.center.position.x - cx, 2) + 
-                                            std::pow(latest_detections_->detections[0].bbox.center.position.y - cy, 2));
+                float dist_first = std::sqrt(std::pow(detections->detections[0].bbox.center.position.x - cx, 2) + 
+                                            std::pow(detections->detections[0].bbox.center.position.y - cy, 2));
 
-                float dist_second = std::sqrt(std::pow(latest_detections_->detections[1].bbox.center.position.x - cx, 2) + 
-                                            std::pow(latest_detections_->detections[1].bbox.center.position.y - cy, 2));
+                float dist_second = std::sqrt(std::pow(detections->detections[1].bbox.center.position.x - cx, 2) + 
+                                            std::pow(detections->detections[1].bbox.center.position.y - cy, 2));
 
-                // Swap if the second detection is closer to the center
+                // Select the detection that is closer to the center.
                 if (dist_first > dist_second) {
-                    // Swap the two detections
-                    std::swap(latest_detections_->detections[0], latest_detections_->detections[1]);
-                } 
+                    first_detection = &detections->detections[1];
+                }
             }
-
-
-            const auto& first_detection = latest_detections_->detections[0];
           
-            int center_x = static_cast<int>(first_detection.bbox.center.position.x / this->width_scalar_);
-            int center_y = static_cast<int>((first_detection.bbox.center.position.y -140) / this->height_scalar_);
-            int width = static_cast<int>(first_detection.bbox.size_x / this->width_scalar_);
-            int height = static_cast<int>(first_detection.bbox.size_y / this->height_scalar_);
+            int center_x = static_cast<int>(first_detection->bbox.center.position.x / this->width_scalar_);
+            int center_y = static_cast<int>((first_detection->bbox.center.position.y -140) / this->height_scalar_);
+            int width = static_cast<int>(first_detection->bbox.size_x / this->width_scalar_);
+            int height = static_cast<int>(first_detection->bbox.size_y / this->height_scalar_);
 
 
 
@@ -216,8 +201,9 @@ void DetectionImageProcessor::process_and_publish_image()
 
                 sensor_msgs::msg::PointCloud2 cloud_msg;
                 pcl::toROSMsg(*cloud, cloud_msg);
-                cloud_msg.header = latest_image_->header;
-                cloud_msg.header.frame_id = frame;
+                cloud_msg.header.stamp = image->header.stamp;
+                cloud_msg.header.frame_id = target_frame;
+
                 pointcloud_pub_->publish(cloud_msg);
 
                 pcl::SACSegmentation<pcl::PointXYZ> seg;
@@ -309,8 +295,8 @@ void DetectionImageProcessor::process_and_publish_image()
                     {
                         sensor_msgs::msg::PointCloud2 near_plane_cloud_msg;
                         pcl::toROSMsg(*near_plane_cloud, near_plane_cloud_msg);
-                        near_plane_cloud_msg.header = latest_image_->header;
-                        near_plane_cloud_msg.header.frame_id = frame;
+                        near_plane_cloud_msg.header.stamp = image->header.stamp;
+                        near_plane_cloud_msg.header.frame_id = target_frame;
                         near_plane_cloud_pub_->publish(near_plane_cloud_msg);  // Publish near plane cloud
                     
 
@@ -332,8 +318,9 @@ void DetectionImageProcessor::process_and_publish_image()
                         filter_direction_ = line_direction;
 
                         geometry_msgs::msg::PoseStamped line_pose_msg;
-                        line_pose_msg.header = latest_image_->header;
-                        line_pose_msg.header.frame_id = frame;
+                        line_pose_msg.header.stamp = image->header.stamp;
+                        line_pose_msg.header.frame_id = target_frame;
+                        
                         line_pose_msg.pose.position.x = centroid[0];
                         line_pose_msg.pose.position.y = centroid[1];
                         line_pose_msg.pose.position.z = centroid[2];
@@ -367,7 +354,8 @@ void DetectionImageProcessor::process_and_publish_image()
                         // Convert to ROS message and publish
                         sensor_msgs::msg::PointCloud2 line_cloud_msg;
                         pcl::toROSMsg(*line_cloud, line_cloud_msg);
-                        line_cloud_msg.header = latest_image_->header;
+                        line_cloud_msg.header.stamp = image->header.stamp;
+                        line_cloud_msg.header.frame_id = target_frame;
                         line_points_pub_->publish(line_cloud_msg);
 
                         // RCLCPP_INFO(this->get_logger(), "Line points published as PointCloud2.");
@@ -384,7 +372,7 @@ void DetectionImageProcessor::process_and_publish_image()
             }
         }
 
-        auto processed_msg = cv_bridge::CvImage(latest_image_->header, "32FC1", cv_image).toImageMsg();
+        auto processed_msg = cv_bridge::CvImage(image->header, "32FC1", cv_image).toImageMsg();
         processed_image_pub_->publish(*processed_msg);
     }
     catch (cv_bridge::Exception &e)
@@ -396,7 +384,27 @@ void DetectionImageProcessor::process_and_publish_image()
 int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
-    rclcpp::spin(std::make_shared<DetectionImageProcessor>());
+
+    auto node = std::make_shared<DetectionImageProcessor>();
+
+    // Use the shared pointer and a proper QoS profile.
+    message_filters::Subscriber<sensor_msgs::msg::Image> image_sub(node, "/zed_node/depth/depth_registered", rmw_qos_profile_default);
+    message_filters::Subscriber<vision_msgs::msg::Detection2DArray> detections_sub(node, "detections_output", rmw_qos_profile_default);
+
+
+    // Define the ExactTime sync policy for an Image and a Detection2DArray.
+    typedef message_filters::sync_policies::ExactTime<sensor_msgs::msg::Image, vision_msgs::msg::Detection2DArray> MySyncPolicy;
+    
+    // Create the synchronizer with a queue size of 10.
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), image_sub, detections_sub);
+
+    // Register the synchronized callback.
+    // (Make sure your DetectionImageProcessor class implements a method with the signature:
+    //   void synchronized_callback(const sensor_msgs::msg::Image::ConstSharedPtr &,
+    //                                const vision_msgs::msg::Detection2DArray::ConstSharedPtr &);
+    sync.registerCallback(std::bind(&DetectionImageProcessor::synchronized_callback, node.get(), std::placeholders::_1, std::placeholders::_2));
+
+    rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;
 }

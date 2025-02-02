@@ -33,10 +33,21 @@
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/filters/extract_indices.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/exact_time.h>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
+
+
+using namespace sensor_msgs;
+using namespace message_filters;
+
 class DetectionImageProcessor : public rclcpp::Node
 {
 public:
     DetectionImageProcessor();
+    void synchronized_callback(const sensor_msgs::msg::Image::ConstSharedPtr & image,const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
 
 private:
     // Subscriptions
@@ -58,8 +69,8 @@ private:
     bool camera_info_received_ = false;
     sensor_msgs::msg::CameraInfo::SharedPtr camera_info_yolo_color_;
     bool camera_info_received_yolo_color_ = false;
-    vision_msgs::msg::Detection2DArray::SharedPtr latest_detections_;
-    sensor_msgs::msg::Image::SharedPtr latest_image_;
+    // vision_msgs::msg::Detection2DArray::SharedPtr latest_detections_;
+    // sensor_msgs::msg::Image::SharedPtr latest_image_;
 
     // Mutex for thread safety
     std::mutex mutex_;
@@ -74,12 +85,11 @@ private:
     // Callback functions
     void camera_info_callback(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg);
     void camera_info_callback_yolo_colored(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg);
-    void detections_callback(const vision_msgs::msg::Detection2DArray::SharedPtr detections_msg);
-    void image_callback(const sensor_msgs::msg::Image::SharedPtr img_msg);
+
 
     // Utility functions
     void compute_height_width_scalars();
-    void process_and_publish_image();
+    void process_and_publish_image(const sensor_msgs::msg::Image::ConstSharedPtr & image,const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
     void project_pixel_to_3d(int u, int v, float depth, pcl::PointXYZ &point);
     void project_3d_to_pixel(float x, float y, float z, int &u, int &v);
 };

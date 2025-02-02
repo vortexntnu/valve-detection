@@ -17,6 +17,7 @@ find_package(OpenCV REQUIRED)  # Correct the OpenCV package name here
 find_package(PCL REQUIRED)  # Point Cloud Library'
 find_package(pcl_conversions REQUIRED)
 
+
 # Add executable
 add_executable(valve_detection src/valve_detection.cpp)
 
