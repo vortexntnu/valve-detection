@@ -36,23 +36,29 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 #include <message_filters/sync_policies/exact_time.h>
+
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
+#include <rclcpp_components/register_node_macro.hpp>
 
 
-using namespace sensor_msgs;
-using namespace message_filters;
-
-class DetectionImageProcessor : public rclcpp::Node
+class ValveDetectionNode : public rclcpp::Node
 {
 public:
-    DetectionImageProcessor();
-    void synchronized_callback(const sensor_msgs::msg::Image::ConstSharedPtr & image,const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
+    explicit ValveDetectionNode(const rclcpp::NodeOptions & options);
+    ~ValveDetectionNode(){};
 
-    message_filters::Subscriber<sensor_msgs::msg::Image> image_sub_;
-    message_filters::Subscriber<vision_msgs::msg::Detection2DArray> detections_sub_;
     
 private:
+    message_filters::Subscriber<sensor_msgs::msg::Image> depth_image_sub_;         
+    message_filters::Subscriber<sensor_msgs::msg::Image> color_image_sub_;  
+    message_filters::Subscriber<vision_msgs::msg::Detection2DArray> detections_sub_;
+
+    typedef message_filters::sync_policies::ExactTime<sensor_msgs::msg::Image, sensor_msgs::msg::Image, vision_msgs::msg::Detection2DArray> MySyncPolicy;
+
+    std::shared_ptr<message_filters::Synchronizer<MySyncPolicy>> sync_;
+
+
     // Subscriptions
     rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_subscription_;
     rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_subscription_yolo_color_;
@@ -85,6 +91,9 @@ private:
     double height_scalar_;
     double width_scalar_;
 
+    void synchronized_callback(const sensor_msgs::msg::Image::ConstSharedPtr & depth_image, 
+                           const sensor_msgs::msg::Image::ConstSharedPtr & color_image, 
+                           const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
     // Callback functions
     void camera_info_callback(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg);
     void camera_info_callback_yolo_colored(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg);
@@ -92,7 +101,9 @@ private:
 
     // Utility functions
     void compute_height_width_scalars();
-    void process_and_publish_image(const sensor_msgs::msg::Image::ConstSharedPtr & image,const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
+    void process_and_publish_image(const sensor_msgs::msg::Image::ConstSharedPtr & depth_image, 
+                                const sensor_msgs::msg::Image::ConstSharedPtr & color_image, 
+                                const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
     void project_pixel_to_3d(int u, int v, float depth, pcl::PointXYZ &point);
     void project_3d_to_pixel(float x, float y, float z, int &u, int &v);
 };
