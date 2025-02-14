@@ -101,9 +101,11 @@ private:
 
     // Utility functions
     void compute_height_width_scalars();
-    void process_and_publish_image(const sensor_msgs::msg::Image::ConstSharedPtr & depth_image, 
-                                const sensor_msgs::msg::Image::ConstSharedPtr & color_image, 
-                                const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
+    // void process_and_publish_image(const sensor_msgs::msg::Image::ConstSharedPtr & depth_image, 
+    //                             const sensor_msgs::msg::Image::ConstSharedPtr & color_image, 
+    //                             const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
+    void process_and_publish_image(const sensor_msgs::msg::Image::ConstSharedPtr & image,const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
+
     void project_pixel_to_3d(int u, int v, float depth, pcl::PointXYZ &point);
     void project_3d_to_pixel(float x, float y, float z, int &u, int &v);
 };
