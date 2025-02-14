@@ -348,24 +348,51 @@ void ValveDetectionNode::process_and_publish_image(
 
                     double angle = std::atan2(longest_line[3] - longest_line[1], longest_line[2] - longest_line[0]);
 
-                // ANGLE TO QUATERNION WITH RESPECT TO PLANE NORMAL.
+                    Eigen::Vector3f plane_normal(coefficients->values[0], coefficients->values[1], coefficients->values[2]);
+                    plane_normal.normalize();
 
-                    // Publish detected line
-                    geometry_msgs::msg::PoseStamped line_pose_msg;
-                    line_pose_msg.header.stamp = depth_image->header.stamp;
-                    line_pose_msg.header.frame_id = "zed_left_camera_frame";
-                    line_pose_msg.pose.position.x = centroid.x();
-                    line_pose_msg.pose.position.y = centroid.y();
-                    line_pose_msg.pose.position.z = centroid.z();
+                    // Find an arbitrary vector perpendicular to the plane normal
+                    Eigen::Vector3f perp_vector = (std::abs(plane_normal.z()) < 0.99) 
+                        ? Eigen::Vector3f(0, 0, 1).cross(plane_normal).normalized()
+                        : Eigen::Vector3f(1, 0, 0).cross(plane_normal).normalized();
 
-                    Eigen::Quaternionf quaternion;
-                    quaternion.setFromTwoVectors(Eigen::Vector3f(1, 0, 0), line_direction.normalized());
+                    // Rotate perp_vector by `angle` around `plane_normal` to get x-axis
+                    Eigen::AngleAxisf rotation(angle, plane_normal);
+                    Eigen::Vector3f x_axis = rotation * perp_vector;  // Rotated vector in-plane
+
+                    // Filter the x-axis direction to maintain consistency
+                    if (filter_direction_.dot(x_axis) < 0) {
+                        x_axis = -x_axis; // Flip to maintain consistency
+                    }
+
+                    // Update filter_direction_
+                    filter_direction_ = x_axis;
+                    
+                    // Compute y-axis (perpendicular to both x and z)
+                    Eigen::Vector3f y_axis = plane_normal.cross(x_axis).normalized();
+
+                    // Construct rotation matrix
+                    Eigen::Matrix3f rotation_matrix;
+                    rotation_matrix.col(0) = x_axis;
+                    rotation_matrix.col(1) = y_axis;
+                    rotation_matrix.col(2) = plane_normal;  // z-axis is the plane normal
+
+                    // Convert rotation matrix to quaternion
+                    Eigen::Quaternionf quaternion(rotation_matrix);
 
                     if (std::isnan(quaternion.x()) || std::isnan(quaternion.y()) ||
                         std::isnan(quaternion.z()) || std::isnan(quaternion.w())) {
                         RCLCPP_WARN(this->get_logger(), "Invalid quaternion computed, skipping pose publishing.");
                         return;
                     }
+
+                    geometry_msgs::msg::PoseStamped line_pose_msg;
+                    line_pose_msg.header.stamp = color_image->header.stamp;
+                    line_pose_msg.header.frame_id = "zed_left_camera_frame";
+
+                    line_pose_msg.pose.position.x = centroid[0];
+                    line_pose_msg.pose.position.y = centroid[1];
+                    line_pose_msg.pose.position.z = centroid[2];
 
                     line_pose_msg.pose.orientation.x = quaternion.x();
                     line_pose_msg.pose.orientation.y = quaternion.y();
