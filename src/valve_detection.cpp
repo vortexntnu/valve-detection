@@ -402,13 +402,50 @@ void ValveDetectionNode::process_and_publish_image(
                 {
                     RCLCPP_WARN(this->get_logger(), "No lines detected in bounding box.");
                 }
+                if (!cv_color_image.empty()) {
+                    // Draw the bounding box on the color image
+                    int x1 = std::max(center_x - width / 2, 0);
+                    int y1 = std::max(center_y - height / 2, 0);
+                    int x2 = std::min(center_x + width / 2, cv_color_image.cols - 1);
+                    int y2 = std::min(center_y + height / 2, cv_color_image.rows - 1);
+        
+                    cv::rectangle(cv_color_image, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), 2);
+        
+                    // Draw the detected line on the color image
+                    if (!lines.empty()) {
+                        cv::Vec4i longest_line = lines[0];
+                        double max_length = 0;
+        
+                        for (const auto &line : lines) {
+                            double length = std::hypot(line[2] - line[0], line[3] - line[1]);
+                            if (length > max_length) {
+                                max_length = length;
+                                longest_line = line;
+                            }
+                        }
+        
+                        // Adjust line coordinates to the full image size
+                        cv::Point pt1(longest_line[0] + x1, longest_line[1] + y1);
+                        cv::Point pt2(longest_line[2] + x1, longest_line[3] + y1);
+        
+                        // Draw the line on the color image
+                        cv::line(cv_color_image, pt1, pt2, cv::Scalar(0, 0, 255), 2);
+                    }
+        
                 }
+            }
             else
             {
                 RCLCPP_WARN(this->get_logger(), "No plane inliers found.");
             }
-            }
         }
+    }
+    // Convert the edited OpenCV image back to a ROS message
+    sensor_msgs::msg::Image::SharedPtr edited_image_msg = cv_bridge::CvImage(color_image->header, "bgr8", cv_color_image).toImageMsg();
+
+    // Publish the edited image
+    processed_image_pub_->publish(*edited_image_msg);
+
     }
     catch (cv_bridge::Exception &e)
     {
