@@ -11,6 +11,8 @@ ValveDetectionNode::ValveDetectionNode(const rclcpp::NodeOptions & options)
     auto color_image_sub_topic = this->declare_parameter<std::string>("color_image_sub_topic");
     auto detections_sub_topic = this->declare_parameter<std::string>("detections_sub_topic");
 
+    line_detection_area_ = this->declare_parameter<int>("line_detection_area", 5);
+
     rclcpp::QoS qos = rclcpp::QoS(rclcpp::KeepLast(10)).reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT);
     depth_image_sub_.subscribe(this, depth_image_sub_topic, qos.get_rmw_qos_profile());
     color_image_sub_.subscribe(this, color_image_sub_topic, qos.get_rmw_qos_profile());
@@ -32,7 +34,7 @@ ValveDetectionNode::ValveDetectionNode(const rclcpp::NodeOptions & options)
     processed_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("yolov8_valve_detection_image", 10);
     plane_normal_pub_ = this->create_publisher<geometry_msgs::msg::Vector3>("plane_normal", 10);
     pointcloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("point_cloud", 10);
-    line_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("line_pose", 10);
+    line_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("valve_pose", 10);
     line_points_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("line_points", 10);
     near_plane_cloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("near_plane_cloud", 10);  
 }
@@ -306,10 +308,12 @@ void ValveDetectionNode::process_and_publish_image(
                     return;
                 }
 
-                int x1 = std::max(center_x - width / 2, 0);
-                int y1 = std::max(center_y - height / 2, 0);
-                int x2 = std::min(center_x + width / 2, cv_color_image.cols - 1);
-                int y2 = std::min(center_y + height / 2, cv_color_image.rows - 1);
+                int x1 = std::max(center_x - width * line_detection_area_/10 , 0);
+                int y1 = std::max(center_y - height * line_detection_area_/10 , 0);
+                int x2 = std::min(center_x + width * line_detection_area_/10 , cv_color_image.cols - 1);
+                int y2 = std::min(center_y + height * line_detection_area_/10 , cv_color_image.rows - 1);
+                // Draw roi for debugging
+                cv::rectangle(cv_color_image, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), 2);
 
                 // Extract ROI (region of interest) from the color image
                 cv::Mat roi = cv_color_image(cv::Rect(x1, y1, x2 - x1, y2 - y1));
@@ -324,7 +328,7 @@ void ValveDetectionNode::process_and_publish_image(
 
                 // Detect lines using Hough Transform
                 std::vector<cv::Vec4i> lines;
-                cv::HoughLinesP(edges, lines, 1, CV_PI / 180, 50, 50, 10);
+                cv::HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 40, 10);
 
                 if (!lines.empty())
                 {
@@ -415,7 +419,8 @@ void ValveDetectionNode::process_and_publish_image(
                     if (!lines.empty()) {
                         cv::Vec4i longest_line = lines[0];
                         double max_length = 0;
-        
+                    
+                        // Find the longest line in the ROI
                         for (const auto &line : lines) {
                             double length = std::hypot(line[2] - line[0], line[3] - line[1]);
                             if (length > max_length) {
@@ -423,13 +428,24 @@ void ValveDetectionNode::process_and_publish_image(
                                 longest_line = line;
                             }
                         }
-        
-                        // Adjust line coordinates to the full image size
-                        cv::Point pt1(longest_line[0] + x1, longest_line[1] + y1);
-                        cv::Point pt2(longest_line[2] + x1, longest_line[3] + y1);
-        
-                        // Draw the line on the color image
+                    
+                        // Adjust line coordinates to the full image size using the same x1 ... as roi calculation
+                        int x1 = std::max(center_x - width * line_detection_area_/10 , 0);
+                        int y1 = std::max(center_y - height * line_detection_area_/10 , 0);
+                        int x2 = std::min(center_x + width * line_detection_area_/10 , cv_color_image.cols - 1);
+                        int y2 = std::min(center_y + height * line_detection_area_/10 , cv_color_image.rows - 1);
+                        cv::Point pt1(longest_line[0] + x1, longest_line[1] + y1); // Add ROI offset
+                        cv::Point pt2(longest_line[2] + x1, longest_line[3] + y1); // Add ROI offset
+                    
+                        // Draw the line on the full color image
                         cv::line(cv_color_image, pt1, pt2, cv::Scalar(0, 0, 255), 2);
+                    
+                        // Debugging output
+                        RCLCPP_INFO(this->get_logger(), "ROI Coordinates: x1=%d, y1=%d, x2=%d, y2=%d", x1, y1, x2, y2);
+                        RCLCPP_INFO(this->get_logger(), "Longest Line in ROI: (%d, %d) -> (%d, %d)", 
+                                    longest_line[0], longest_line[1], longest_line[2], longest_line[3]);
+                        RCLCPP_INFO(this->get_logger(), "Adjusted Line in Full Image: (%d, %d) -> (%d, %d)", 
+                                    pt1.x, pt1.y, pt2.x, pt2.y);
                     }
         
                 }

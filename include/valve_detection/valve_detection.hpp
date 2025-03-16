@@ -91,6 +91,8 @@ private:
     double height_scalar_;
     double width_scalar_;
 
+    int line_detection_area_;
+
     /**
      * @brief Callback function for synchronized depth image, color image, and 2D detections.
      *
