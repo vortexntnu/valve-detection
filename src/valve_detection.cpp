@@ -312,12 +312,31 @@ void ValveDetectionNode::process_and_publish_image(
                 int y1 = std::max(center_y - height * line_detection_area_/10 , 0);
                 int x2 = std::min(center_x + width * line_detection_area_/10 , cv_color_image.cols - 1);
                 int y2 = std::min(center_y + height * line_detection_area_/10 , cv_color_image.rows - 1);
-                // Draw roi for debugging
-                cv::rectangle(cv_color_image, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), 2);
+                // // Draw roi for debugging
+                // cv::rectangle(cv_color_image, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), 2);
 
-                // Extract ROI (region of interest) from the color image
+                // // Extract ROI (region of interest) from the color image
+                // cv::Mat roi = cv_color_image(cv::Rect(x1, y1, x2 - x1, y2 - y1));
+
+
+                // Define the ellipse parameters
+                cv::Point center((x1 + x2) / 2, (y1 + y2) / 2); // Center of the ellipse
+                cv::Size axes((x2 - x1) / 2, (y2 - y1) / 2);   // Semi-major and semi-minor axes
+
+                // Create a mask for the elliptical ROI
+                cv::Mat mask = cv::Mat::zeros(cv_color_image.size(), CV_8UC1);
+                cv::ellipse(mask, center, axes, 0, 0, 360, cv::Scalar(255), -1); // Draw a filled ellipse
+
+                // Apply the mask to the ROI
                 cv::Mat roi = cv_color_image(cv::Rect(x1, y1, x2 - x1, y2 - y1));
+                cv::Mat masked_roi;
+                cv::bitwise_and(roi, roi, masked_roi, mask(cv::Rect(x1, y1, x2 - x1, y2 - y1)));
 
+                // For debugging: Draw the ellipse on the original image
+                cv::ellipse(cv_color_image, center, axes, 0, 0, 360, cv::Scalar(0, 255, 0), 2);
+
+
+                
                 // Convert to grayscale for edge detection
                 cv::Mat gray;
                 cv::cvtColor(roi, gray, cv::COLOR_BGR2GRAY);
