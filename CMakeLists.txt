@@ -29,7 +29,7 @@ add_library(${LIB_NAME} SHARED
   src/valve_detection.cpp
 )
 
-target_link_libraries(${LIB_NAME} PUBLIC 
+target_link_libraries(${LIB_NAME} PUBLIC
   ${OpenCV_LIBS}
   ${PCL_LIBRARIES}
 )
