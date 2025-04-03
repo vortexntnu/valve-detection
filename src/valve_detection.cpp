@@ -308,10 +308,10 @@ void ValveDetectionNode::process_and_publish_image(
                     return;
                 }
 
-                int x1 = std::max(center_x - width * line_detection_area_/10 , 0);
-                int y1 = std::max(center_y - height * line_detection_area_/10 , 0);
-                int x2 = std::min(center_x + width * line_detection_area_/10 , cv_color_image.cols - 1);
-                int y2 = std::min(center_y + height * line_detection_area_/10 , cv_color_image.rows - 1);
+                int x1 = std::max(center_x - width * line_detection_area_/100 , 0);
+                int y1 = std::max(center_y - height * line_detection_area_/100 , 0);
+                int x2 = std::min(center_x + width * line_detection_area_/100 , cv_color_image.cols - 1);
+                int y2 = std::min(center_y + height * line_detection_area_/100 , cv_color_image.rows - 1);
                 // // Draw roi for debugging
                 // cv::rectangle(cv_color_image, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(0, 255, 0), 2);
 
@@ -449,10 +449,10 @@ void ValveDetectionNode::process_and_publish_image(
                         }
                     
                         // Adjust line coordinates to the full image size using the same x1 ... as roi calculation
-                        int x1 = std::max(center_x - width * line_detection_area_/10 , 0);
-                        int y1 = std::max(center_y - height * line_detection_area_/10 , 0);
-                        int x2 = std::min(center_x + width * line_detection_area_/10 , cv_color_image.cols - 1);
-                        int y2 = std::min(center_y + height * line_detection_area_/10 , cv_color_image.rows - 1);
+                        int x1 = std::max(center_x - width * line_detection_area_/100 , 0);
+                        int y1 = std::max(center_y - height * line_detection_area_/100 , 0);
+                        int x2 = std::min(center_x + width * line_detection_area_/100 , cv_color_image.cols - 1);
+                        int y2 = std::min(center_y + height * line_detection_area_/100 , cv_color_image.rows - 1);
                         cv::Point pt1(longest_line[0] + x1, longest_line[1] + y1); // Add ROI offset
                         cv::Point pt2(longest_line[2] + x1, longest_line[3] + y1); // Add ROI offset
                     
