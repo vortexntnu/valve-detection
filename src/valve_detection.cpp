@@ -343,7 +343,7 @@ void ValveDetectionNode::process_and_publish_image(
 
                 // Apply Canny edge detection
                 cv::Mat edges;
-                cv::Canny(gray, edges, 50, 150, 3);
+                cv::Canny(gray, edges, 50, 250, 3);
 
                 // Detect lines using Hough Transform
                 std::vector<cv::Vec4i> lines;
