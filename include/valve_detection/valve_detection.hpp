@@ -72,10 +72,14 @@ class ValveDetectionNode : public rclcpp::Node {
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr processed_image_pub_;
     rclcpp::Publisher<geometry_msgs::msg::Vector3>::SharedPtr plane_normal_pub_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_pub_;
-    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr line_pose_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr line_points_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr near_plane_cloud_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr canny_debug_image_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
+        line_pose_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
+        line_points_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
+        near_plane_cloud_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr
+        canny_debug_image_pub_;
 
     // Stored messages
     sensor_msgs::msg::CameraInfo::SharedPtr camera_info_;
@@ -98,13 +102,16 @@ class ValveDetectionNode : public rclcpp::Node {
     int line_detection_area_;
 
     /**
-     * @brief Callback function for synchronized depth image, color image, and 2D detections.
+     * @brief Callback function for synchronized depth image, color image, and
+     * 2D detections.
      *
-     * This function is triggered when synchronized messages for a depth image, a color image, and a 2D detection array
+     * This function is triggered when synchronized messages for a depth image,
+     * a color image, and a 2D detection array
      */
-    void synchronized_callback(const sensor_msgs::msg::Image::ConstSharedPtr & depth_image, 
-                           const sensor_msgs::msg::Image::ConstSharedPtr & color_image, 
-                           const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
+    void synchronized_callback(
+        const sensor_msgs::msg::Image::ConstSharedPtr& depth_image,
+        const sensor_msgs::msg::Image::ConstSharedPtr& color_image,
+        const vision_msgs::msg::Detection2DArray::ConstSharedPtr& detections);
     // Callback functions
     void camera_info_callback(
         const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg);
@@ -113,64 +120,82 @@ class ValveDetectionNode : public rclcpp::Node {
 
     // Utility functions
     /**
-     * @brief Computes the height and width scalars based on the camera information.
+     * @brief Computes the height and width scalars based on the camera
+     * information.
      *
-     * This function calculates the scaling factors (`height_scalar_` and `width_scalar_`) 
-     * by comparing the dimensions of two camera frames:
+     * This function calculates the scaling factors (`height_scalar_` and
+     * `width_scalar_`) by comparing the dimensions of two camera frames:
      * - The YOLO color camera frame (`camera_info_yolo_color_`).
      * - The reference camera frame (`camera_info_`).
      *
-    */
+     */
     void compute_height_width_scalars();
 
     /**
      * @brief Main logic executed when two images are synchronized.
      *
-     * This function processes synchronized depth and color images along with 2D detections to calculate the angle of the valve handle
-     * and its orientation in 3D space. It uses RANSAC line detection to determine the handle's angle and RANSAC plane detection
-     * to find the normal vector of the plane in which the valve handle lies.
+     * This function processes synchronized depth and color images along with 2D
+     * detections to calculate the angle of the valve handle and its orientation
+     * in 3D space. It uses RANSAC line detection to determine the handle's
+     * angle and RANSAC plane detection to find the normal vector of the plane
+     * in which the valve handle lies.
      *
      * The function performs the following steps:
-     * 1. Converts the depth and color images from ROS messages to OpenCV matrices.
+     * 1. Converts the depth and color images from ROS messages to OpenCV
+     * matrices.
      * 2. Selects the most centered detection from the 2D detection array.
-     * 3. Projects the detected bounding box into 3D space using the depth image and camera intrinsics.
-     * 4. Uses RANSAC plane detection to find the plane normal vector and filters points near the plane.
-     * 5. Detects the valve handle's orientation using Hough line detection on the color image.
-     * 6. Computes the 3D pose of the valve handle and publishes it as a `geometry_msgs::msg::PoseStamped` message.
+     * 3. Projects the detected bounding box into 3D space using the depth image
+     * and camera intrinsics.
+     * 4. Uses RANSAC plane detection to find the plane normal vector and
+     * filters points near the plane.
+     * 5. Detects the valve handle's orientation using Hough line detection on
+     * the color image.
+     * 6. Computes the 3D pose of the valve handle and publishes it as a
+     * `geometry_msgs::msg::PoseStamped` message.
      *
      * @param[in] depth_image A shared pointer to the depth image message.
      * @param[in] color_image A shared pointer to the color image message.
      * @param[in] detections A shared pointer to the 2D detection array message.
      *
-     * @pre The `camera_info_` and `camera_info_yolo_color_` member variables must be initialized with valid camera intrinsic parameters.
-     * @pre The input images and detections must be synchronized (i.e., they correspond to the same timestamp or frame).
+     * @pre The `camera_info_` and `camera_info_yolo_color_` member variables
+     * must be initialized with valid camera intrinsic parameters.
+     * @pre The input images and detections must be synchronized (i.e., they
+     * correspond to the same timestamp or frame).
      * @post If successful, the function publishes the following:
      *       - A point cloud of the detected valve handle region.
      *       - The normal vector of the detected plane.
      *       - The 3D pose of the valve handle.
-     * @post If unsuccessful, the function logs warnings or errors and returns early.
+     * @post If unsuccessful, the function logs warnings or errors and returns
+     * early.
      *
-     * @note The function assumes that the input images and detections are synchronized.
-     * @note The function uses RANSAC for robust plane and line detection, which is suitable for noisy sensor data.
-     * @note The function handles edge cases such as invalid depth values, empty detections, and failed RANSAC fits.
+     * @note The function assumes that the input images and detections are
+     * synchronized.
+     * @note The function uses RANSAC for robust plane and line detection, which
+     * is suitable for noisy sensor data.
+     * @note The function handles edge cases such as invalid depth values, empty
+     * detections, and failed RANSAC fits.
      */
-    void process_and_publish_image(const sensor_msgs::msg::Image::ConstSharedPtr & depth_image, 
-                                const sensor_msgs::msg::Image::ConstSharedPtr & color_image, 
-                                const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections);
+    void process_and_publish_image(
+        const sensor_msgs::msg::Image::ConstSharedPtr& depth_image,
+        const sensor_msgs::msg::Image::ConstSharedPtr& color_image,
+        const vision_msgs::msg::Detection2DArray::ConstSharedPtr& detections);
 
     /**
-     * @brief Projects a 2D pixel coordinate and depth value into a 3D point in the camera frame.
+     * @brief Projects a 2D pixel coordinate and depth value into a 3D point in
+     * the camera frame.
      *
-     * This function converts a pixel coordinate `(u, v)` and its corresponding depth value into a 3D point
-    */
-    void project_pixel_to_3d(int u, int v, float depth, pcl::PointXYZ &point);
+     * This function converts a pixel coordinate `(u, v)` and its corresponding
+     * depth value into a 3D point
+     */
+    void project_pixel_to_3d(int u, int v, float depth, pcl::PointXYZ& point);
 
     /**
      * @brief Projects a 3D point in the camera frame to 2D pixel coordinates.
      *
-     * This function converts a 3D point `(x, y, z)` in the camera frame into 2D pixel coordinates `(u, v)`
-    */
-    void project_3d_to_pixel(float x, float y, float z, int &u, int &v);
+     * This function converts a 3D point `(x, y, z)` in the camera frame into 2D
+     * pixel coordinates `(u, v)`
+     */
+    void project_3d_to_pixel(float x, float y, float z, int& u, int& v);
 };
 
 #endif  // DETECTION_IMAGE_PROCESSOR_HPP
