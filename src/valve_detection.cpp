@@ -22,9 +22,11 @@ ValveDetectionNode::ValveDetectionNode(const rclcpp::NodeOptions & options)
     sync_->registerCallback(std::bind(&ValveDetectionNode::synchronized_callback, this, _1, _2, _3));
 
     // Create subscriptions with synchronized callbacks
-    camera_info_subscription_yolo_color_  = this->create_subscription<sensor_msgs::msg::CameraInfo>(
-        "/yolov8_encoder/resize/camera_info", 10,
-        std::bind(&ValveDetectionNode::camera_info_callback_yolo_colored, this, std::placeholders::_1));
+    camera_info_subscription_yolo_color_ =
+        this->create_subscription<sensor_msgs::msg::CameraInfo>(
+            "/yolov8_encoder/resize/camera_info", 10,
+            std::bind(&ValveDetectionNode::camera_info_callback_yolo_colored,
+                      this, std::placeholders::_1));
 
     // Create subscriptions with synchronized callbacks
     camera_info_subscription_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
@@ -41,53 +43,55 @@ ValveDetectionNode::ValveDetectionNode(const rclcpp::NodeOptions & options)
 
 }
 
-Eigen::Vector3f ValveDetectionNode::filter_direction_ = Eigen::Vector3f(1, 0, 0);
+Eigen::Vector3f ValveDetectionNode::filter_direction_ =
+    Eigen::Vector3f(1, 0, 0);
 
-void ValveDetectionNode::camera_info_callback(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg)
-{
-    if (!camera_info_received_)
-    {
+void ValveDetectionNode::camera_info_callback(
+    const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg) {
+    if (!camera_info_received_) {
         camera_info_ = camera_info_msg;
         camera_info_received_ = true;
-        RCLCPP_INFO(this->get_logger(), "Camera resize info received and stored.");
-        
+        RCLCPP_INFO(this->get_logger(),
+                    "Camera resize info received and stored.");
+
         compute_height_width_scalars();
         // unsubscribe to avoid further callback executions
         camera_info_subscription_.reset();
     }
 }
 
-void ValveDetectionNode::camera_info_callback_yolo_colored(const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg)
-{
-    if (!camera_info_received_yolo_color_)
-    {
+void ValveDetectionNode::camera_info_callback_yolo_colored(
+    const sensor_msgs::msg::CameraInfo::SharedPtr camera_info_msg) {
+    if (!camera_info_received_yolo_color_) {
         camera_info_yolo_color_ = camera_info_msg;
         camera_info_received_yolo_color_ = true;
-        RCLCPP_INFO(this->get_logger(), "Camera yolo color info received and stored.");
-        
+        RCLCPP_INFO(this->get_logger(),
+                    "Camera yolo color info received and stored.");
+
         compute_height_width_scalars();
         // unsubscribe to avoid further callback executions
         camera_info_subscription_yolo_color_.reset();
     }
 }
 
-void ValveDetectionNode::compute_height_width_scalars()
-{
-    if (camera_info_received_ && camera_info_received_yolo_color_)
-    {
-        height_scalar_ = static_cast<double>(camera_info_yolo_color_->height -280) / camera_info_->height;
-        width_scalar_ = static_cast<double>(camera_info_yolo_color_->width) / camera_info_->width;
-
+void ValveDetectionNode::compute_height_width_scalars() {
+    if (camera_info_received_ && camera_info_received_yolo_color_) {
+        height_scalar_ =
+            static_cast<double>(camera_info_yolo_color_->height - 280) /
+            camera_info_->height;
+        width_scalar_ = static_cast<double>(camera_info_yolo_color_->width) /
+                        camera_info_->width;
 
         RCLCPP_INFO(this->get_logger(), "Height scalar: %.3f", height_scalar_);
         RCLCPP_INFO(this->get_logger(), "Width scalar: %.3f", width_scalar_);
     }
 }
 
-void ValveDetectionNode::project_pixel_to_3d(int u, int v, float depth, pcl::PointXYZ &point)
-{
-    if (!camera_info_ || depth <= 0)
-    {
+void ValveDetectionNode::project_pixel_to_3d(int u,
+                                             int v,
+                                             float depth,
+                                             pcl::PointXYZ& point) {
+    if (!camera_info_ || depth <= 0) {
         return;  // Skip invalid depth or missing camera info
     }
 
@@ -104,10 +108,13 @@ void ValveDetectionNode::project_pixel_to_3d(int u, int v, float depth, pcl::Poi
     point.z = -(v - cy) * depth / fy;
 }
 
-void ValveDetectionNode::project_3d_to_pixel(float x, float y, float z, int &u, int &v)
-{
+void ValveDetectionNode::project_3d_to_pixel(float x,
+                                             float y,
+                                             float z,
+                                             int& u,
+                                             int& v) {
     if (!camera_info_ || z <= 0) {
-        return; // Ensure camera info is available and z is positive
+        return;  // Ensure camera info is available and z is positive
     }
 
     // Extract intrinsic parameters
@@ -123,15 +130,14 @@ void ValveDetectionNode::project_3d_to_pixel(float x, float y, float z, int &u, 
 }
 
 void ValveDetectionNode::synchronized_callback(
-    const sensor_msgs::msg::Image::ConstSharedPtr & depth_image,
-    const sensor_msgs::msg::Image::ConstSharedPtr & color_image,
-    const vision_msgs::msg::Detection2DArray::ConstSharedPtr & detections)
-{
+    const sensor_msgs::msg::Image::ConstSharedPtr& depth_image,
+    const sensor_msgs::msg::Image::ConstSharedPtr& color_image,
+    const vision_msgs::msg::Detection2DArray::ConstSharedPtr& detections) {
+    RCLCPP_INFO(this->get_logger(),
+                "Synchronized image and detection messages received.");
 
-    RCLCPP_INFO(this->get_logger(), "Synchronized image and detection messages received.");
-
-    process_and_publish_image(depth_image, color_image, detections);
-    
+    // process_and_publish_image(depth_image, color_image, detections);
+    process_and_publish_image(depth_image, detections);
 }
 
 void ValveDetectionNode::process_and_publish_image(
