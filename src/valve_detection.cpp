@@ -37,6 +37,8 @@ ValveDetectionNode::ValveDetectionNode(const rclcpp::NodeOptions & options)
     line_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("valve_pose", 10);
     line_points_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("line_points", 10);
     near_plane_cloud_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("near_plane_cloud", 10);  
+    canny_debug_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>("canny_valve_detection_image", 10);
+
 }
 
 Eigen::Vector3f ValveDetectionNode::filter_direction_ = Eigen::Vector3f(1, 0, 0);
@@ -343,11 +345,12 @@ void ValveDetectionNode::process_and_publish_image(
 
                 // Apply Canny edge detection
                 cv::Mat edges;
-                cv::Canny(gray, edges, 50, 250, 3);
+                cv::Canny(gray, edges, 100, 250, 3);
+                canny_debug_image_pub_->publish(*cv_bridge::CvImage(color_image->header, "mono8", edges).toImageMsg());
 
                 // Detect lines using Hough Transform
                 std::vector<cv::Vec4i> lines;
-                cv::HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 40, 10);
+                cv::HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 40, 5);
 
                 if (!lines.empty())
                 {

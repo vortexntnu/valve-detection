@@ -72,6 +72,7 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr line_pose_pub_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr line_points_pub_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr near_plane_cloud_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr canny_debug_image_pub_;
 
     // Stored messages
     sensor_msgs::msg::CameraInfo::SharedPtr camera_info_;
