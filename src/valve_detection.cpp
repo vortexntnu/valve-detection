@@ -154,8 +154,8 @@ void ValveDetectionNode::synchronized_callback(
     RCLCPP_INFO(this->get_logger(),
                 "Synchronized image and detection messages received.");
 
-    // process_and_publish_image(depth_image, color_image, detections);
-    process_and_publish_image(depth_image, detections);
+    process_and_publish_image(depth_image, color_image, detections);
+    // process_and_publish_image(depth_image, detections);
 }
 
 void ValveDetectionNode::process_and_publish_image(
@@ -409,14 +409,14 @@ void ValveDetectionNode::process_and_publish_image(
 
                     // Apply Canny edge detection
                     cv::Mat edges;
-                    cv::Canny(gray, edges, 100, 250, 3);
+                    cv::Canny(gray, edges, 50, 200, 3);
                     canny_debug_image_pub_->publish(
                         *cv_bridge::CvImage(color_image->header, "mono8", edges)
                              .toImageMsg());
 
                     // Detect lines using Hough Transform
                     std::vector<cv::Vec4i> lines;
-                    cv::HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 40, 5);
+                    cv::HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 50, 5);
 
                     if (!lines.empty()) {
                         cv::Vec4i longest_line = lines[0];
