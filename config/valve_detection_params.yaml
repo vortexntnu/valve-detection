@@ -4,4 +4,4 @@
     color_image_sub_topic: "/image_rect"
     detections_sub_topic: "/detections_output"
 
-    line_detection_area: 25
+    line_detection_area: 22

@@ -16,7 +16,8 @@ def generate_launch_description():
                 get_package_share_directory('valve_detection'),
                 'config',
                 'valve_detection_params.yaml',
-            )
+            ),
+            {'use_sim_time': True},
         ],
         output='screen',
     )

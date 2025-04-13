@@ -409,14 +409,14 @@ void ValveDetectionNode::process_and_publish_image(
 
                     // Apply Canny edge detection
                     cv::Mat edges;
-                    cv::Canny(gray, edges, 50, 200, 3);
+                    cv::Canny(gray, edges, 50, 100, 3);
                     canny_debug_image_pub_->publish(
                         *cv_bridge::CvImage(color_image->header, "mono8", edges)
                              .toImageMsg());
 
                     // Detect lines using Hough Transform
                     std::vector<cv::Vec4i> lines;
-                    cv::HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 50, 5);
+                    cv::HoughLinesP(edges, lines, 1, CV_PI / 180, 20, 45, 5);
 
                     if (!lines.empty()) {
                         cv::Vec4i longest_line = lines[0];
