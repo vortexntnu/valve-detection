@@ -49,7 +49,6 @@ ament_target_dependencies(${LIB_NAME} PUBLIC
   vision_msgs
   geometry_msgs
   std_msgs
-  PCL
   pcl_conversions
 )
 

@@ -1,0 +1,27 @@
+/**:
+  ros__parameters:
+    depth_image_sub_topic: "/zed_node/depth/depth_registered"
+    color_image_sub_topic: "/zed_node/left/image_rect_color"
+    detections_sub_topic: "/detections_output"
+
+    color_image_info_topic: "/zed_node/left/camera_info"
+    depth_image_info_topic: "/zed_node/depth/camera_info"
+
+    valve_pose_pub_topic: "/valve_pose"
+
+    yolo_img_width: 640
+    yolo_img_height: 640
+
+    annulus_radius_ratio: 0.8
+
+    plane_ransac_threshold: 0.01
+    plane_ransac_max_iterations: 20
+
+    valve_handle_offset: 0.05
+
+    calculate_angle: true
+
+    visualize_detections: true
+    debug_visualize: false
+    annulus_pub_topic: "/bbx_annulus_pcl"
+    plane_normal_pub_topic: "/plane_normal"
