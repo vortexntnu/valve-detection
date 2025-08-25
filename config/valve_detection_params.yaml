@@ -2,6 +2,39 @@
   ros__parameters:
     depth_image_sub_topic: "/zed_node/depth/depth_registered"
     color_image_sub_topic: "/zed_node/left/image_rect_color"
+    pcl_sub_topic: "/zed_node/depth/point_cloud"
     detections_sub_topic: "/detections_output"
 
-    line_detection_area: 22
+    color_image_info_topic: "/zed_node/left/camera_info"
+    depth_image_info_topic: "/zed_node/depth/camera_info"
+
+    valve_poses_pub_topic: "/valve_poses"
+
+    yolo_img_width: 640
+    yolo_img_height: 640
+
+    annulus_radius_ratio: 0.8
+
+    plane_ransac_threshold: 0.01
+    plane_ransac_max_iterations: 20
+
+    valve_handle_offset: 0.05
+
+    use_depth_image: true # if false, use pcl and tf2 to transform pointcloud to color frame
+
+    visualize_detections: true
+    processed_image_pub_topic: "/valve_detection_image"
+    pcl_visualize: false
+    annulus_pub_topic: "/bbx_annulus_pcl"
+    plane_pub_topic: "/annulus_plane_pcl"
+
+    calculate_angle: true
+    angle.detection_area_ratio: 0.05 # percentage of bb size
+    angle.canny_low_threshold: 50
+    angle.canny_high_threshold: 150
+    angle.canny_aperture_size: 3 # must be odd
+    angle.hough_rho_res: 1.0
+    angle.hough_theta_res: 0.0174533 # 1 degree in radians
+    angle.hough_threshold: 20
+    angle.hough_min_line_length: 45.0
+    angle.hough_max_line_gap: 5.0

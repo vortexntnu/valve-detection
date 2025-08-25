@@ -20,13 +20,18 @@ find_package(std_msgs REQUIRED)
 find_package(OpenCV 4.5.4 REQUIRED)
 find_package(PCL REQUIRED)
 find_package(pcl_conversions REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 
 include_directories(include)
 
 set(LIB_NAME "${PROJECT_NAME}_component")
 
 add_library(${LIB_NAME} SHARED
-  src/valve_detection.cpp
+  src/valve_detector.cpp
+  src/depth_image_processing.cpp
+  src/pointcloud_processing.cpp
+  src/angle_detector.cpp
+  src/valve_pose_ros.cpp
 )
 
 target_link_libraries(${LIB_NAME} PUBLIC
@@ -50,11 +55,14 @@ ament_target_dependencies(${LIB_NAME} PUBLIC
   geometry_msgs
   std_msgs
   pcl_conversions
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
 )
 
 rclcpp_components_register_node(
     ${LIB_NAME}
-    PLUGIN "ValveDetectionNode"
+    PLUGIN "valve_detection::ValvePoseNode"
     EXECUTABLE ${PROJECT_NAME}_node
 )
 
