@@ -5,8 +5,7 @@
     pcl_sub_topic: "/zed_node/depth/point_cloud"
     detections_sub_topic: "/detections_output"
 
-    color_image_info_topic: "/zed_node/left/camera_info"
-    depth_image_info_topic: "/zed_node/depth/camera_info"
+    color_image_info_topic: "/zed_node/depth/camera_info"
 
     valve_poses_pub_topic: "/valve_poses"
 
@@ -24,7 +23,7 @@
 
     visualize_detections: true
     processed_image_pub_topic: "/valve_detection_image"
-    pcl_visualize: false
+    pcl_visualize: true
     annulus_pub_topic: "/bbx_annulus_pcl"
     plane_pub_topic: "/annulus_plane_pcl"
 

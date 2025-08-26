@@ -25,6 +25,11 @@ cv::Mat ValveDetector::draw_detections(const cv::Mat& image,
     if (boxes.size() != poses.size()) {
         return cv::Mat();
     }
+    std::vector<BoundingBox> transformed_boxes;
+    transformed_boxes.reserve(boxes.size());
+    for (const auto& box : boxes) {
+        transformed_boxes.push_back(transform_bounding_box(box));
+    }
 
     cv::Mat visualized_image = image.clone();
 
@@ -34,8 +39,8 @@ cv::Mat ValveDetector::draw_detections(const cv::Mat& image,
          color_image_properties_.intr.cy, 0, 0, 1);
     cv::Mat dist_coeffs = cv::Mat::zeros(4, 1, CV_64F);
 
-    for (size_t i = 0; i < boxes.size(); ++i) {
-        const auto& box = boxes[i];
+    for (size_t i = 0; i < transformed_boxes.size(); ++i) {
+        const auto& box = transformed_boxes[i];
         const auto& pose = poses[i];
 
         int x1 = box.center_x - box.size_x / 2;
