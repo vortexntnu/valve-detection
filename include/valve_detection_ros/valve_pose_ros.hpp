@@ -213,8 +213,10 @@ class ValvePoseNode : public rclcpp::Node {
         std::vector<Pose> poses;
         poses.reserve(boxes.size());
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr all_annulus_cloud;
-        pcl::PointCloud<pcl::PointXYZ>::Ptr all_annulus_plane_cloud;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr all_annulus_cloud(
+            new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr all_annulus_plane_cloud(
+            new pcl::PointCloud<pcl::PointXYZ>);
 
         if constexpr (std::is_same<T, sensor_msgs::msg::PointCloud2>::value) {
             valve_detector_->Compute_valve_poses(
