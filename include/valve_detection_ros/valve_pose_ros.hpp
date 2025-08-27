@@ -9,6 +9,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <vision_msgs/msg/detection2_d_array.hpp>
+#include "valve_detection/angle_detector.hpp"
 #include "valve_detection/valve_detector.hpp"
 
 #include <message_filters/subscriber.h>
@@ -207,7 +208,10 @@ class ValvePoseNode : public rclcpp::Node {
         std::vector<BoundingBox> boxes;
         boxes.reserve(detections->detections.size());
         for (const auto& detection : detections->detections) {
-            boxes.push_back(to_bounding_box(detection.bbox));
+            BoundingBox box = to_bounding_box(detection.bbox);
+            BoundingBox org_image_box =
+                valve_detector_->transform_bounding_box(box);
+            boxes.push_back(org_image_box);
         }
 
         std::vector<Pose> poses;
@@ -218,16 +222,28 @@ class ValvePoseNode : public rclcpp::Node {
         pcl::PointCloud<pcl::PointXYZ>::Ptr all_annulus_plane_cloud(
             new pcl::PointCloud<pcl::PointXYZ>);
 
+        if (calculate_angle_ && debug_visualize_) {
+            cv::Mat angle_debug_image = cv_color_image.clone();
+
+            angle_detector_->compute_angles_debug(angle_debug_image, boxes);
+            sensor_msgs::msg::Image::SharedPtr output_msg =
+                cv_bridge::CvImage(depth_msg->header, "bgr8", angle_debug_image)
+                    .toImageMsg();
+            angle_image_pub_->publish(*output_msg);
+        } else if (calculate_angle_) {
+            angle_detector_->compute_angles(cv_color_image, boxes);
+        }
+
         if constexpr (std::is_same<T, sensor_msgs::msg::PointCloud2>::value) {
             valve_detector_->Compute_valve_poses(
-                pcl_tf, cv_color_image, boxes, poses, all_annulus_cloud,
-                all_annulus_plane_cloud, pcl_visualize_, calculate_angle_);
+                pcl_tf, boxes, poses, all_annulus_cloud,
+                all_annulus_plane_cloud, debug_visualize_);
         } else if constexpr (std::is_same<T, sensor_msgs::msg::Image>::value) {
             valve_detector_->Compute_valve_poses(
-                cv_depth_image, cv_color_image, boxes, poses, all_annulus_cloud,
-                all_annulus_plane_cloud, pcl_visualize_, calculate_angle_);
+                cv_depth_image, boxes, poses, all_annulus_cloud,
+                all_annulus_plane_cloud, debug_visualize_);
         }
-        if (pcl_visualize_ && all_annulus_cloud && all_annulus_plane_cloud) {
+        if (debug_visualize_ && all_annulus_cloud && all_annulus_plane_cloud) {
             publish_annulus_pcl(all_annulus_cloud, depth_msg->header);
             publish_annulus_plane(all_annulus_plane_cloud, depth_msg->header);
         }
@@ -257,6 +273,7 @@ class ValvePoseNode : public rclcpp::Node {
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
         annulus_plane_pub_;
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr processed_image_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr angle_image_pub_;
 
     // Depth image sync policies uses ExactTime with the assumption
     // that the depth image and color image are from the same camera
@@ -296,12 +313,13 @@ class ValvePoseNode : public rclcpp::Node {
 
     bool color_image_info_received_ = false;
     std::unique_ptr<ValveDetector> valve_detector_;
+    std::unique_ptr<AngleDetector> angle_detector_;
     std::string color_image_frame_id_;
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
     bool visualize_detections_ = true;
-    bool pcl_visualize_ = false;
+    bool debug_visualize_ = false;
     bool calculate_angle_ = true;
     bool use_color_image_ = true;
     bool use_depth_image_ = true;

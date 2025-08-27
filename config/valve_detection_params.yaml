@@ -23,14 +23,15 @@
 
     visualize_detections: true
     processed_image_pub_topic: "/valve_detection_image"
-    pcl_visualize: true
+    debug_visualize: true
     annulus_pub_topic: "/bbx_annulus_pcl"
     plane_pub_topic: "/annulus_plane_pcl"
+    angle_detection_image_pub_topic: "/valve_angle_image"
 
     calculate_angle: true
-    angle.detection_area_ratio: 0.05 # percentage of bb size
-    angle.canny_low_threshold: 50
-    angle.canny_high_threshold: 150
+    angle.detection_area_ratio: 0.22 # percentage of bb size
+    angle.canny_low_threshold: 40
+    angle.canny_high_threshold: 80
     angle.canny_aperture_size: 3 # must be odd
     angle.hough_rho_res: 1.0
     angle.hough_theta_res: 0.0174533 # 1 degree in radians

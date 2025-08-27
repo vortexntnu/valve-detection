@@ -32,9 +32,9 @@ ValvePoseNode::ValvePoseNode(const rclcpp::NodeOptions& options)
     valve_poses_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>(
         valve_poses_pub_topic, qos);
 
-    pcl_visualize_ = this->declare_parameter<bool>("pcl_visualize");
+    debug_visualize_ = this->declare_parameter<bool>("debug_visualize");
 
-    if (pcl_visualize_) {
+    if (debug_visualize_) {
         std::string annulus_pub_topic =
             this->declare_parameter<std::string>("annulus_pub_topic");
         annulus_pcl_pub_ =
@@ -45,6 +45,10 @@ ValvePoseNode::ValvePoseNode(const rclcpp::NodeOptions& options)
         annulus_plane_pub_ =
             this->create_publisher<sensor_msgs::msg::PointCloud2>(
                 plane_pub_topic, qos);
+        angle_image_pub_ = this->create_publisher<sensor_msgs::msg::Image>(
+            this->declare_parameter<std::string>(
+                "angle_detection_image_pub_topic"),
+            qos);
     }
     if (visualize_detections_) {
         std::string processed_image_pub_topic =
@@ -202,7 +206,7 @@ void ValvePoseNode::init_angle_detector() {
         angle_params.hough_max_line_gap =
             this->declare_parameter<double>("angle.hough_max_line_gap");
 
-        valve_detector_->init_angle_detector(angle_params);
+        angle_detector_ = std::make_unique<AngleDetector>(angle_params);
     }
 }
 

@@ -7,8 +7,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
-#include <opencv2/core/mat.hpp>
-#include "valve_detection/angle_detector.hpp"
+#include <opencv2/opencv.hpp>
 #include "valve_detection/depth_image_processing.hpp"
 #include "valve_detection/pointcloud_processing.hpp"
 #include "valve_detection/types.hpp"
@@ -64,44 +63,39 @@ class ValveDetector {
      * @param all_annulus_cloud Optional point cloud for visualizing all annuli.
      * @param all_annulus_plane_cloud Optional point cloud for visualizing
      * segmented planes.
-     * @param pcl_visualize Whether to populate visualization point clouds.
+     * @param debug_visualize Whether to populate visualization point clouds.
      * @param calculate_angle Whether to compute the valve rotation angle.
      */
     template <typename T>
     void Compute_valve_poses(
         const T& depth_input,
-        const cv::Mat& color_image,
         const std::vector<BoundingBox>& boxes,
         std::vector<Pose>& poses,
         pcl::PointCloud<pcl::PointXYZ>::Ptr& all_annulus_cloud,
         pcl::PointCloud<pcl::PointXYZ>::Ptr& all_annulus_plane_cloud,
-        bool pcl_visualize,
-        bool calculate_angle) {
-        if (pcl_visualize) {
+        bool debug_visualize) {
+        if (debug_visualize) {
             all_annulus_cloud->clear();
             all_annulus_plane_cloud->clear();
         }
 
         for (const auto& box : boxes) {
-            BoundingBox org_image_box = transform_bounding_box(box);
             pcl::PointCloud<pcl::PointXYZ>::Ptr annulus_cloud(
                 new pcl::PointCloud<pcl::PointXYZ>);
 
             if constexpr (std::is_same<
                               T, pcl::PointCloud<pcl::PointXYZ>::Ptr>::value) {
-                extract_annulus_pcl(depth_input, org_image_box,
-                                    color_image_properties_,
+                extract_annulus_pcl(depth_input, box, color_image_properties_,
                                     annulus_radius_ratio_, annulus_cloud);
             } else if constexpr (std::is_same<T, cv::Mat>::value) {
-                extract_annulus_pcl(depth_input, org_image_box,
-                                    color_image_properties_,
+                extract_annulus_pcl(depth_input, box, color_image_properties_,
                                     annulus_radius_ratio_, annulus_cloud);
             }
 
             if (annulus_cloud->empty())
                 continue;
 
-            if (pcl_visualize) {
+            if (debug_visualize) {
                 *all_annulus_cloud += *annulus_cloud;
             }
 
@@ -112,7 +106,7 @@ class ValveDetector {
             if (!segment_plane(annulus_cloud, coefficients, inliers))
                 continue;
 
-            if (pcl_visualize) {
+            if (debug_visualize) {
                 pcl::PointCloud<pcl::PointXYZ>::Ptr annulus_plane_cloud(
                     new pcl::PointCloud<pcl::PointXYZ>);
                 pcl::copyPointCloud(*annulus_cloud, inliers->indices,
@@ -120,7 +114,7 @@ class ValveDetector {
                 *all_annulus_plane_cloud += *annulus_plane_cloud;
             }
 
-            Eigen::Vector3f bb_centre_ray = get_ray_direction(org_image_box);
+            Eigen::Vector3f bb_centre_ray = get_ray_direction(box);
             Eigen::Vector3f ray_plane_intersection =
                 find_ray_plane_intersection(coefficients, bb_centre_ray);
             if (ray_plane_intersection.isZero())
@@ -134,11 +128,7 @@ class ValveDetector {
             Eigen::Vector3f shifted_position =
                 shift_point_along_normal(ray_plane_intersection, plane_normal);
 
-            float angle = org_image_box.theta;
-            if (calculate_angle) {
-                angle = angle_detector_->calculate_angle(color_image,
-                                                         org_image_box);
-            }
+            float angle = box.theta;
 
             Eigen::Matrix3f rotation_matrix =
                 create_rotation_matrix(plane_normal, angle);
@@ -249,12 +239,6 @@ class ValveDetector {
                                            float angle);
 
     /**
-     * @brief Initializes the angle detector with given parameters.
-     * @param params Parameters for Canny and Hough-based angle detection.
-     */
-    void init_angle_detector(const AngleDetectorParams& params);
-
-    /**
      * @brief Converts a 3x3 rotation matrix to a normalized quaternion.
      * @param rotation_matrix Input rotation matrix.
      * @param quat Output quaternion.
@@ -285,7 +269,6 @@ class ValveDetector {
     int letterbox_pad_x_;
     int letterbox_pad_y_;
     Eigen::Vector3f filter_direction_ = Eigen::Vector3f(1, 0, 0);
-    std::unique_ptr<AngleDetector> angle_detector_;
 };
 
 }  // namespace valve_detection
