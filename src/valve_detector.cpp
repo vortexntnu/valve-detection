@@ -206,30 +206,70 @@ Eigen::Vector3f ValveDetector::shift_point_along_normal(
 }
 
 Eigen::Matrix3f ValveDetector::create_rotation_matrix(
+    const pcl::ModelCoefficients::Ptr& coefficients,
     const Eigen::Vector3f& plane_normal,
     float angle) {
+    if (!coefficients || coefficients->values.size() < 4) {
+        return Eigen::Matrix3f::Identity();
+    }
+
     Eigen::Vector3f z_axis = plane_normal;
+    float D = coefficients->values[3];
 
-    Eigen::Vector3f temp_vec(1, 0, 0);
-    if (std::abs(z_axis.dot(temp_vec)) > 0.99f) {
-        temp_vec = Eigen::Vector3f(0, 1, 0);
+    float fx = color_image_properties_.intr.fx;
+    float fy = color_image_properties_.intr.fy;
+    float cx = color_image_properties_.intr.cx;
+    float cy = color_image_properties_.intr.cy;
+
+    Eigen::Matrix3f K;
+    K << fx, 0, cx, 0, fy, cy, 0, 0, 1;
+    Eigen::Matrix3f Kinv = K.inverse();
+
+    // Define two image points along the given angle (through principal point)
+    // ---
+    float len = 50.0f;  // arbitrary pixel length (only direction matters)
+    Eigen::Vector3f p1(cx, cy, 1.f);
+    Eigen::Vector3f p2(cx + len * std::cos(angle), cy + len * std::sin(angle),
+                       1.f);
+
+    // Back project points to rays
+    Eigen::Vector3f r1 = (Kinv * p1).normalized();
+    Eigen::Vector3f r2 = (Kinv * p2).normalized();
+
+    // Compute intersections of rays with the plane
+    float denom1 = z_axis.dot(r1);
+    float denom2 = z_axis.dot(r2);
+
+    if (std::abs(denom1) < 1e-6f || std::abs(denom2) < 1e-6f) {
+        // rays parallel to plane — return identity fallback
+        return Eigen::Matrix3f::Identity();
     }
-    Eigen::Vector3f base_x_axis = z_axis.cross(temp_vec).normalized();
 
-    Eigen::AngleAxisf rotation(angle, z_axis);
-    Eigen::Vector3f x_axis = rotation * base_x_axis;
+    float t1 = -D / denom1;
+    float t2 = -D / denom2;
 
-    if (filter_direction_.dot(x_axis) < 0) {
+    Eigen::Vector3f X1 = t1 * r1;
+    Eigen::Vector3f X2 = t2 * r2;
+
+    // Compute in-plane direction corresponding to the image line angle
+    Eigen::Vector3f x_axis = (X2 - X1).normalized();
+
+    // Project onto the plane (for numerical stability)
+    x_axis = (x_axis - x_axis.dot(z_axis) * z_axis).normalized();
+
+    // Ensure consistent direction (optional: avoid flipping frame between
+    // frames)
+    if (filter_direction_.dot(x_axis) < 0)
         x_axis = -x_axis;
-    }
     filter_direction_ = x_axis;
 
     Eigen::Vector3f y_axis = z_axis.cross(x_axis).normalized();
+    x_axis = y_axis.cross(z_axis).normalized();
 
     Eigen::Matrix3f rotation_matrix;
-    rotation_matrix.col(0) = x_axis;
-    rotation_matrix.col(1) = y_axis;
-    rotation_matrix.col(2) = z_axis;
+    rotation_matrix.col(0) = x_axis;  // X_obj: direction of the image line
+    rotation_matrix.col(1) = y_axis;  // Y_obj: perpendicular in-plane
+    rotation_matrix.col(2) = z_axis;  // Z_obj: plane normal
 
     return rotation_matrix;
 }

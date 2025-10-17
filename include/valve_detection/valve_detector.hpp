@@ -131,7 +131,7 @@ class ValveDetector {
             float angle = box.theta;
 
             Eigen::Matrix3f rotation_matrix =
-                create_rotation_matrix(plane_normal, angle);
+                create_rotation_matrix(coefficients, plane_normal, angle);
             Eigen::Quaternionf rotation_quat;
             rmat_to_quat(rotation_matrix, rotation_quat);
 
@@ -231,12 +231,15 @@ class ValveDetector {
     /**
      * @brief Creates a rotation matrix with the plane normal as z-axis and
      * valve angle applied.
+     * @param coefficients Plane coefficients.
      * @param plane_normal Normalized plane normal vector.
      * @param angle Valve rotation angle in radians.
      * @return Rotation matrix (Eigen::Matrix3f) for the valve pose.
      */
-    Eigen::Matrix3f create_rotation_matrix(const Eigen::Vector3f& plane_normal,
-                                           float angle);
+    Eigen::Matrix3f create_rotation_matrix(
+        const pcl::ModelCoefficients::Ptr& coefficients,
+        const Eigen::Vector3f& plane_normal,
+        float angle);
 
     /**
      * @brief Converts a 3x3 rotation matrix to a normalized quaternion.
