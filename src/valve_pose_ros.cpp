@@ -274,16 +274,23 @@ void ValvePoseNode::publish_valve_poses(
     pose_array_msg.header = header;
 
     for (const auto& pose : poses) {
-        geometry_msgs::msg::Pose pose_msg;
-        pose_msg.position.x = pose.position.x();
-        pose_msg.position.y = pose.position.y();
-        pose_msg.position.z = pose.position.z();
-        pose_msg.orientation.x = pose.orientation.x();
-        pose_msg.orientation.y = pose.orientation.y();
-        pose_msg.orientation.z = pose.orientation.z();
-        pose_msg.orientation.w = pose.orientation.w();
+        if (!std::isnan(pose.orientation.x()) &&
+            !std::isnan(pose.orientation.y()) &&
+            !std::isnan(pose.orientation.z()) &&
+            !std::isnan(pose.orientation.w()) &&
+            !std::isnan(pose.position.x()) && !std::isnan(pose.position.y()) &&
+            !std::isnan(pose.position.z())) {
+            geometry_msgs::msg::Pose pose_msg;
+            pose_msg.position.x = pose.position.x();
+            pose_msg.position.y = pose.position.y();
+            pose_msg.position.z = pose.position.z();
+            pose_msg.orientation.x = pose.orientation.x();
+            pose_msg.orientation.y = pose.orientation.y();
+            pose_msg.orientation.z = pose.orientation.z();
+            pose_msg.orientation.w = pose.orientation.w();
 
-        pose_array_msg.poses.push_back(pose_msg);
+            pose_array_msg.poses.push_back(pose_msg);
+        }
     }
     valve_poses_pub_->publish(pose_array_msg);
 }

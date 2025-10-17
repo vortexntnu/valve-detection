@@ -18,10 +18,6 @@ ValveDetector::ValveDetector(int yolo_img_width_,
 cv::Mat ValveDetector::draw_detections(const cv::Mat& image,
                                        const std::vector<BoundingBox>& boxes,
                                        const std::vector<Pose>& poses) const {
-    if (boxes.size() != poses.size()) {
-        return cv::Mat();
-    }
-
     cv::Mat visualized_image = image.clone();
 
     cv::Mat camera_matrix =
@@ -32,7 +28,6 @@ cv::Mat ValveDetector::draw_detections(const cv::Mat& image,
 
     for (size_t i = 0; i < boxes.size(); ++i) {
         const auto& box = boxes[i];
-        const auto& pose = poses[i];
 
         int x1 = box.center_x - box.size_x / 2;
         int y1 = box.center_y - box.size_y / 2;
@@ -41,20 +36,38 @@ cv::Mat ValveDetector::draw_detections(const cv::Mat& image,
         cv::rectangle(visualized_image, cv::Point(x1, y1), cv::Point(x2, y2),
                       cv::Scalar(0, 255, 0), 2);
 
-        cv::Mat tvec = (cv::Mat_<double>(3, 1) << pose.position[0],
-                        pose.position[1], pose.position[2]);
+        std::ostringstream label;
+        label << "id:" << i;
+        if (!std::isnan(box.theta)) {
+            label << "Valve θ=" << std::fixed << std::setprecision(2)
+                  << (box.theta * 180.0 / M_PI) << "°";
+            cv::putText(visualized_image, label.str(), cv::Point(x1, y1 - 5),
+                        cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 0),
+                        1);
+        }
+        // Draw pose axes only if valid pose exists
+        if (i < poses.size()) {
+            const Pose& pose = poses[i];
+            if (!std::isnan(pose.position[0]) &&
+                !std::isnan(pose.position[1]) &&
+                !std::isnan(pose.position[2]) && !std::isnan(box.theta)) {
+                cv::Mat tvec = (cv::Mat_<double>(3, 1) << pose.position[0],
+                                pose.position[1], pose.position[2]);
 
-        Eigen::Matrix3f rotation_matrix = pose.orientation.toRotationMatrix();
-        cv::Mat rmat = (cv::Mat_<double>(3, 3) << rotation_matrix(0, 0),
-                        rotation_matrix(0, 1), rotation_matrix(0, 2),
-                        rotation_matrix(1, 0), rotation_matrix(1, 1),
-                        rotation_matrix(1, 2), rotation_matrix(2, 0),
-                        rotation_matrix(2, 1), rotation_matrix(2, 2));
-        cv::Mat rvec;
-        cv::Rodrigues(rmat, rvec);
+                Eigen::Matrix3f rotation_matrix =
+                    pose.orientation.toRotationMatrix();
+                cv::Mat rmat = (cv::Mat_<double>(3, 3) << rotation_matrix(0, 0),
+                                rotation_matrix(0, 1), rotation_matrix(0, 2),
+                                rotation_matrix(1, 0), rotation_matrix(1, 1),
+                                rotation_matrix(1, 2), rotation_matrix(2, 0),
+                                rotation_matrix(2, 1), rotation_matrix(2, 2));
+                cv::Mat rvec;
+                cv::Rodrigues(rmat, rvec);
 
-        cv::drawFrameAxes(visualized_image, camera_matrix, dist_coeffs, rvec,
-                          tvec, 0.1);
+                cv::drawFrameAxes(visualized_image, camera_matrix, dist_coeffs,
+                                  rvec, tvec, 0.1);
+            }
+        }
     }
     return visualized_image;
 }

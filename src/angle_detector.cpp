@@ -56,8 +56,24 @@ void AngleDetector::compute_angles(const cv::Mat& color_image,
         }
 
         cv::Vec4i longest_line = find_longest_line(lines);
-        box.theta = std::atan2(longest_line[3] - longest_line[1],
-                               longest_line[2] - longest_line[0]);
+
+        if (longest_line[0] >= longest_line[2]) {
+            int temp_x = longest_line[0];
+            int temp_y = longest_line[1];
+            longest_line[0] = longest_line[2];
+            longest_line[1] = longest_line[3];
+        }
+
+        float theta = std::atan2(longest_line[3] - longest_line[1],
+                                 longest_line[2] - longest_line[0]);
+
+        if (theta < 0) {
+            theta += CV_PI;
+        }
+        if (theta > CV_PI) {
+            theta -= CV_PI;
+        }
+        box.theta = theta;
     }
 }
 
