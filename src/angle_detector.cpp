@@ -62,6 +62,8 @@ void AngleDetector::compute_angles(const cv::Mat& color_image,
             int temp_y = longest_line[1];
             longest_line[0] = longest_line[2];
             longest_line[1] = longest_line[3];
+            longest_line[2] = temp_x;
+            longest_line[3] = temp_y;
         }
 
         float theta = std::atan2(longest_line[3] - longest_line[1],

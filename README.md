@@ -86,10 +86,11 @@ A `PoseArray` message is published with one `Pose` per detected valve. If orient
 
 ## Common Issues
 
-| Issue                        | Possible Cause                                                               | Fix |
-| ---------------------------- | ---------------------------------------------------------------------------- | --- |
-| No poses published           | Missing plane segmentation (adjust `plane_ransac_threshold` or annulus size) |                 |                   |     |
-| Angle NaN / no handle lines  | Tune Hough and Canny thresholds                                              |     |
+| Issue                      | Possible Cause                                                               |
+|----------------------------|-----------------------------------------------------------------------------|
+| No poses published         | Missing plane segmentation (adjust `plane_ransac_threshold` or annulus size) |
+| Angle NaN / no handle lines| Tune Hough and Canny thresholds                                              |
+
 
 ---
 
