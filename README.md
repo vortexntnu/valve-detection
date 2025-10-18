@@ -92,3 +92,7 @@ A `PoseArray` message is published with one `Pose` per detected valve. If orient
 | Angle NaN / no handle lines  | Tune Hough and Canny thresholds                                              |     |
 
 ---
+
+## Future work
+* Use actual endpoints of line for backprojection to retrieve the perspective-correct plane angle. Now we just use rotation around optical axis.
+TODO: For OBB, estimate line segment from BB size.
