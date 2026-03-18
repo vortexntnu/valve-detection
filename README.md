@@ -5,95 +5,119 @@
 
 ---
 
-### Overview
+## Overview
 
-The **Valve Detection Node** estimates the **3D pose and orientation** of industrial valves from:
+The **Valve Detection Node** estimates the **3D pose and orientation** of industrial valves from a synchronized depth image, color image, and 2D oriented bounding box detections (e.g., from a YOLO OBB model).
 
-* A **depth image** or **point cloud**,
-* An optional **color image**, and
-* **2D detections** (e.g., YOLO bounding boxes).
-
-It fits a **plane** to the valve annulus, computes the **3D intersection** of the valve center ray with that plane, and estimates the **rotation** of the valve handle using image-based line detection.
-
-It can output:
-
-* A `geometry_msgs::msg::PoseArray` of all valve poses,
-* Debug point clouds (annulus points and segmented planes),
-* Annotated color images showing detections, plane fits, and axes,
-* Optional angle detection debug images.
+For each detection it:
+1. Extracts a point cloud from the depth image aligned to the color camera frame.
+2. Fits a plane to those points using RANSAC.
+3. Intersects the viewing ray with the plane to find the 3D position.
+4. Derives the orientation from the plane normal and the bounding box angle.
 
 ---
 
+## File Layout
 
+| File | Responsibility |
+|------|---------------|
+| `valve_pose_ros.hpp/.cpp` | ROS node — subscriptions, publishing, NMS, camera data ownership |
+| `depth_image_processing.hpp/.cpp` | Depth transforms — back-projection, point cloud extraction, depth-to-color pixel mapping |
+| `pose_estimator.hpp/.cpp` | Normal/plane estimation — RANSAC plane fit, ray–plane intersection, rotation matrix, pose |
+| `types.hpp` | Shared data types (`BoundingBox`, `Pose`, `ImageProperties`, `DepthColorExtrinsic`) |
 
-
+---
 
 ## Launching the Node
-
 
 ```bash
 ros2 launch valve_detection valve_detection.launch.py
 ```
 
-## How it works
+---
+
+## How It Works
 
 ### 1. Input Synchronization
 
-The node synchronizes:
+The node subscribes to three topics using `message_filters::ApproximateTime`:
 
-* **Depth (or point cloud)**
-* **Color image** (optional)
-* **2D detections**
+| Topic (default) | Type |
+|---|---|
+| `/realsense/D555_409122300281_Depth` | `sensor_msgs/Image` (16UC1 mm) |
+| `/realsense/D555_409122300281_Color` | `sensor_msgs/Image` (BGR8) |
+| `/yolo_obb_object_detection/detections` | `vision_msgs/Detection2DArray` |
 
-It supports multiple input modes via `use_depth_image` and `use_color_image`.
+### 2. Duplicate Suppression (NMS)
 
-### 2. Annulus Extraction
+Detections are filtered with greedy NMS. Two boxes are considered duplicates when their IoU or intersection-over-minimum exceeds the configured threshold. At most 2 detections are kept per frame.
 
-For each bounding box, a ring-shaped region (annulus) around the center is extracted from the depth image or point cloud.
+### 3. Point Cloud Extraction
 
-### 3. Plane Segmentation
+For each kept bounding box, all depth pixels whose reprojection into the color frame falls inside the oriented bounding box are back-projected to 3D (in the color camera frame). The depth-to-color extrinsic is applied to correctly handle the baseline offset between the two cameras.
 
-RANSAC is used to fit a plane through the annulus points.
+### 4. Plane Segmentation
 
-### 4. Ray–Plane Intersection
+RANSAC fits a plane through the extracted point cloud.
 
-The center ray from the camera through the bounding box center is intersected with the plane to find the valve’s 3D position.
+### 5. Ray–Plane Intersection
 
-### 5. Orientation Estimation
+The viewing ray through the bounding box center (using color intrinsics) is intersected with the fitted plane to find the valve's 3D position. The position is optionally shifted along the plane normal by `valve_handle_offset` to account for the valve handle protrusion.
 
-* The **plane normal** defines one orientation axis.
-* The **valve handle angle** (from image) defines the in-plane rotation.
-* Intrinsics are used to back-project that angle into 3D.
-* The result is a full 3×3 rotation matrix and quaternion.
+### 6. Orientation Estimation
 
-### 6. Pose Publishing
+The plane normal defines the Z-axis. The bounding box angle is back-projected onto the plane using the color intrinsics to determine the in-plane X-axis, giving a full 3×3 rotation matrix converted to a quaternion.
 
-A `PoseArray` message is published with one `Pose` per detected valve. If orientation computation failed no pose is published.
+### 7. Depth Colormap Visualization
 
----
-
-## Visualization Outputs
-
-| Topic                    | Description                                 |                                  |
-| ------------------------ | ------------------------------------------- | ---------------------------------------- |
-| `/valve_detection_image` | Color image with bounding boxes and 3D axes | |
-| `/valve_angle_image`     | Debug overlay showing detected Hough lines  |                       |
-| `/bbx_annulus_pcl`       | Ring-shaped depth points used for plane fit                   |
-| `/annulus_plane_pcl`     | Segmented plane points                      |
+The bounding box is reprojected from color image space to depth image space using the full intrinsic + extrinsic pipeline (`project_color_pixel_to_depth`) so the overlay is correctly aligned on the depth colormap.
 
 ---
 
+## Published Topics
+
+| Topic | Type | Description |
+|-------|------|-------------|
+| `/valve_pose` | `geometry_msgs/PoseStamped` | Best detection pose |
+| `/valve_poses` | `geometry_msgs/PoseArray` | All detection poses |
+| `/valve_landmarks` | `vortex_msgs/LandmarkArray` | Poses with landmark type/subtype |
+| `/valve_detection_image` | `sensor_msgs/Image` | Color image with OBB overlays |
+| `/valve_detection_depth_colormap` | `sensor_msgs/Image` | Depth colormap with OBB overlays |
+| `/valve_points` | `sensor_msgs/PointCloud2` | Valve center positions |
+| `/valve_depth_cloud` | `sensor_msgs/PointCloud2` | Points used for plane fit |
+| `/bbx_annulus_pcl` | `sensor_msgs/PointCloud2` | Debug: extracted annulus points |
+| `/annulus_plane_pcl` | `sensor_msgs/PointCloud2` | Debug: RANSAC plane inliers |
+
+---
+
+## Key Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `annulus_radius_ratio` | `0.8` | Inner radius of the extraction ring as fraction of outer radius |
+| `plane_ransac_threshold` | `0.01` | RANSAC inlier distance threshold (m) |
+| `plane_ransac_max_iterations` | `50` | RANSAC iteration limit |
+| `valve_handle_offset` | `0.05` | Shift along plane normal to reach handle (m) |
+| `iou_duplicate_threshold` | `0.5` | IoU threshold for NMS |
+| `yolo_img_width/height` | `640` | YOLO letterbox reference size for bbox remapping |
+| `debug_visualize` | `false` | Publish annulus and plane point clouds |
+| `output_frame_id` | `camera_color_optical_frame` | TF frame for published poses |
+
+Camera intrinsics (`color_fx/fy/cx/cy`, `depth_fx/fy/cx/cy`) and distortion coefficients are set in `config/valve_detection_params.yaml`. Depth intrinsics can alternatively be received from a `CameraInfo` topic.
+
+---
 
 ## Common Issues
 
-| Issue                      | Possible Cause                                                               |
-|----------------------------|-----------------------------------------------------------------------------|
-| No poses published         | Missing plane segmentation (adjust `plane_ransac_threshold` or annulus size) |
-| Angle NaN / no handle lines| Tune Hough and Canny thresholds                                              |
-
+| Issue | Possible Cause |
+|-------|---------------|
+| No poses published | Too few plane inliers — lower `plane_ransac_threshold` or increase `annulus_radius_ratio` |
+| Pose position offset | Wrong `valve_handle_offset` or incorrect camera intrinsics/extrinsic |
+| OBB misaligned on depth colormap | Incorrect depth-to-color extrinsic in `d555_depth_to_color_extrinsic()` |
+| Duplicate poses | Lower `iou_duplicate_threshold` |
 
 ---
 
-## Future work
-* Use actual endpoints of line for backprojection to retrieve the perspective-correct plane angle. Now we just use rotation around optical axis.
-TODO: For OBB, estimate line segment from BB size.
+## Future Work
+
+- Use actual OBB edge endpoints for back-projection to get the perspective-correct in-plane angle instead of rotating around the optical axis.

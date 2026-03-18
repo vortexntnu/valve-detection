@@ -1,40 +1,83 @@
 /**:
   ros__parameters:
-    depth_image_sub_topic: "/zed_node/depth/depth_registered"
-    color_image_sub_topic: "/zed_node/left/image_rect_color"
-    pcl_sub_topic: "/zed_node/depth/point_cloud"
-    detections_sub_topic: "/detections_output"
+    # ── Inputs ────────────────────────────────────────────────────────────────
+    depth_image_sub_topic: "/realsense/D555_409122300281_Depth"
+    color_image_sub_topic: "/realsense/D555_409122300281_Color"
+    detections_sub_topic: "/yolo_obb_object_detection/detections"
 
-    color_image_info_topic: "/zed_node/depth/camera_info"
+    # Depth camera-info topic (optional – used to load depth intrinsics if published).
+    # Color intrinsics are always taken from config params below.
+    depth_image_info_topic: "/camera/camera/depth/camera_info"
 
+    # Color camera intrinsics (always used – not overridden by camera_info)
+    # Source: /camera/camera/color/camera_info
+    color_fx: 452.121521
+    color_fy: 451.737976
+    color_cx: 438.254059
+    color_cy: 248.703217
+    color_image_width: 896
+    color_image_height: 504
+
+    # Distortion coefficients [k1, k2, p1, p2, k3] (plumb_bob model)
+    color_d1: -0.0548105500638485
+    color_d2:  0.0597584918141365
+    color_d3:  0.000486430013552308
+    color_d4:  0.00031599000794813
+    color_d5: -0.0192314591258764
+
+    # Depth camera intrinsics (fallback when depth camera_info is not published)
+    # Source: /camera/camera/depth/camera_info
+    depth_fx: 449.449707
+    depth_fy: 449.449707
+    depth_cx: 444.819946
+    depth_cy: 248.226578
+    depth_image_width: 896
+    depth_image_height: 504
+
+    # ── Outputs ───────────────────────────────────────────────────────────────
+    valve_pose_stamped_pub_topic: "/valve_pose"
     valve_poses_pub_topic: "/valve_poses"
+    landmarks_pub_topic: "/valve_landmarks"
+    processed_image_pub_topic: "/valve_detection_image"
+    depth_colormap_pub_topic: "/valve_detection_depth_colormap"
+    valve_points_pub_topic: "/valve_points"
+    depth_cloud_pub_topic: "/valve_depth_cloud"
+    depth_colormap_value_min: 0.1
+    depth_colormap_value_max: 1125.5
+    debug_annulus_pub_topic: "/bbx_annulus_pcl"
+    debug_plane_pub_topic: "/annulus_plane_pcl"
 
+    # ── YOLO letterbox reference size ─────────────────────────────────────────
     yolo_img_width: 640
     yolo_img_height: 640
 
+    # ── Annulus and plane fit ─────────────────────────────────────────────────
     annulus_radius_ratio: 0.8
-
     plane_ransac_threshold: 0.01
-    plane_ransac_max_iterations: 20
+    plane_ransac_max_iterations: 50
 
+    # ── Duplicate-detection suppression ──────────────────────────────────────
+    # Two bounding boxes are considered the same valve when their
+    # axis-aligned IoU exceeds this threshold OR when the smaller box
+    # overlaps the larger by more than 70 % (intersection-over-minimum).
+    # Maximum 2 landmarks are published per frame.
+    iou_duplicate_threshold: 0.5
+
+    # ── Pose offset ───────────────────────────────────────────────────────────
+    # Shift the estimated position along the plane normal by this amount (m).
     valve_handle_offset: 0.05
 
-    use_depth_image: true # if false, use pcl and tf2 to transform pointcloud to color frame
+    # ── Behaviour toggles ─────────────────────────────────────────────────────
+    use_color_image: true
+    visualize_detections: true  # publish annotated color image
+    debug_visualize: false       # publish annulus / plane point clouds
 
-    visualize_detections: true
-    processed_image_pub_topic: "/valve_detection_image"
-    debug_visualize: true
-    annulus_pub_topic: "/bbx_annulus_pcl"
-    plane_pub_topic: "/annulus_plane_pcl"
-    angle_detection_image_pub_topic: "/valve_angle_image"
+    # ── Landmark fields ───────────────────────────────────────────────────────
+    landmark_type: 1        # VALVE
+    landmark_subtype: 0     # UNKNOWN
 
-    calculate_angle: true
-    angle.detection_area_ratio: 0.22 # percentage of bb size
-    angle.canny_low_threshold: 40
-    angle.canny_high_threshold: 80
-    angle.canny_aperture_size: 3 # must be odd
-    angle.hough_rho_res: 1.0
-    angle.hough_theta_res: 0.0174533 # 1 degree in radians
-    angle.hough_threshold: 20
-    angle.hough_min_line_length: 45.0
-    angle.hough_max_line_gap: 5.0
+    # ── Output frame ──────────────────────────────────────────────────────────
+    # frame_id used for all published poses. Set to the TF frame that matches
+    # your robot's TF tree so Foxglove can display the pose automatically.
+    # Leave empty ("") to inherit the frame_id from the depth image header.
+    output_frame_id: "camera_color_optical_frame"

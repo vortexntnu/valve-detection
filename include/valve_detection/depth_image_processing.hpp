@@ -1,61 +1,61 @@
-#ifndef VALVE_POSE_DEPTH_HPP
-#define VALVE_POSE_DEPTH_HPP
+#pragma once
 
 #include "valve_detection/types.hpp"
-
-#include <pcl/ModelCoefficients.h>
-#include <pcl/PointIndices.h>
+#include <opencv2/core.hpp>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <cmath>
-#include <limits>
-#include <opencv2/core/mat.hpp>
 
 namespace valve_detection {
 
-/**
- * @brief Projects a 2D pixel with depth into 3D camera coordinates.
- *
- * @param u The x-coordinate of the pixel in the image.
- * @param v The y-coordinate of the pixel in the image.
- * @param depth The depth value at the pixel (in meters or the same units as
- * intrinsics).
- * @param fx Focal length along x-axis.
- * @param fy Focal length along y-axis.
- * @param cx Principal point x-coordinate.
- * @param cy Principal point y-coordinate.
- * @param[out] point The resulting 3D point in camera coordinates.
- */
-void project_pixel_to_point(int u,
-                            int v,
-                            float depth,
-                            double fx,
-                            double fy,
-                            double cx,
-                            double cy,
-                            pcl::PointXYZ& point);
+void project_pixel_to_point(
+    int u, int v, float depth,
+    double fx, double fy, double cx, double cy,
+    pcl::PointXYZ& out);
 
-/**
- * @brief Extracts a 3D point cloud representing the annulus (valve rim) from a
- * depth image.
- *
- * The function selects pixels within the annulus region of a bounding box and
- * projects them into 3D points using the camera intrinsics.
- *
- * @param depth_image The input depth image (CV_32FC1 or similar).
- * @param bbox The bounding box around the valve in the image.
- * @param image_properties Camera intrinsics and image dimensions.
- * @param annulus_radius_ratio Fraction of the bounding box considered as the
- * annulus (0.0–1.0).
- * @param[out] cloud The resulting point cloud containing the 3D points of the
- * annulus.
- */
-void extract_annulus_pcl(const cv::Mat& depth_image,
-                         const BoundingBox& bbox,
-                         const ImageProperties& image_properties,
-                         float annulus_radius_ratio,
-                         pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud);
+void extract_annulus_pcl(
+    const cv::Mat& depth_image,                // CV_32FC1 meters
+    const BoundingBox& bbox,                   // in ORIGINAL image pixels
+    const ImageProperties& img_props,
+    float annulus_radius_ratio,                // inner radius = outer*ratio
+    pcl::PointCloud<pcl::PointXYZ>::Ptr& out);
+
+// Hardcoded depth-to-color extrinsic for Intel RealSense D555.
+// Values from the camera URDF / factory calibration.
+// Verify with: ros2 topic echo /realsense/extrinsics/depth_to_color
+// or the URDF at https://github.com/IntelRealSense/librealsense/issues/14577
+DepthColorExtrinsic d555_depth_to_color_extrinsic();
+
+// Like extract_annulus_pcl but with proper depth-to-color alignment.
+// Iterates depth pixels, back-projects with depth intrinsics, applies the
+// extrinsic transform, then checks whether the resulting color-frame
+// projection falls inside the annulus.  Output points are in the color
+// camera frame.
+void extract_annulus_pcl_aligned(
+    const cv::Mat& depth_image,                // CV_32FC1 meters, depth frame
+    const BoundingBox& color_bbox,             // annulus defined in color pixels
+    const ImageProperties& color_props,
+    const ImageProperties& depth_props,
+    const DepthColorExtrinsic& extrinsic,
+    float annulus_radius_ratio,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr& out);
+
+// Extracts all valid depth points whose color-frame projection falls inside
+// the oriented bounding box.  Output points are in the color camera frame.
+void extract_bbox_pcl_aligned(
+    const cv::Mat& depth_image,                // CV_32FC1 meters, depth frame
+    const BoundingBox& color_bbox,             // OBB defined in color pixels
+    const ImageProperties& color_props,
+    const ImageProperties& depth_props,
+    const DepthColorExtrinsic& extrinsic,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr& out);
+
+// Project a color image pixel to depth image coordinates.
+// u_c, v_c: pixel coordinates in the color image.
+// Z:        depth of the point in the color camera frame (metres).
+cv::Point2f project_color_pixel_to_depth(
+    float u_c, float v_c, float Z,
+    const ImageProperties& color_props,
+    const ImageProperties& depth_props,
+    const DepthColorExtrinsic& extr);
 
 }  // namespace valve_detection
-
-#endif  // VALVE_POSE_DEPTH_HPP
