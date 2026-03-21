@@ -32,10 +32,9 @@ class PoseEstimator {
     void calculate_letterbox_padding();
     BoundingBox transform_bounding_box(const BoundingBox& bbox) const;
 
-    bool compute_pose_from_depth(
+    PoseResult compute_pose_from_depth(
         const cv::Mat& depth_image,   // CV_32FC1 meters
         const BoundingBox& bbox_org,  // in original image pixels
-        Pose& out_pose,
         pcl::PointCloud<pcl::PointXYZ>::Ptr annulus_dbg,
         pcl::PointCloud<pcl::PointXYZ>::Ptr plane_dbg,
         bool debug_visualize) const;
@@ -65,12 +64,12 @@ class PoseEstimator {
     DepthColorExtrinsic depth_color_extrinsic_{};
     bool has_depth_props_{false};
 
-    int yolo_img_width_{640};
-    int yolo_img_height_{640};
-    float annulus_radius_ratio_{0.8f};
-    float plane_ransac_threshold_{0.01f};
-    int plane_ransac_max_iterations_{50};
-    float valve_handle_offset_{0.05f};
+    int yolo_img_width_;
+    int yolo_img_height_;
+    float annulus_radius_ratio_;
+    float plane_ransac_threshold_;
+    int plane_ransac_max_iterations_;
+    float valve_handle_offset_;
 
     double letterbox_scale_factor_{1.0};
     double letterbox_pad_x_{0};

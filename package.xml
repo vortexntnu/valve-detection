@@ -4,7 +4,7 @@
   <name>valve_detection</name>
   <version>0.1.0</version>
   <description>Valve pose estimation from YOLOv26 OBB detections + depth image.</description>
-  <maintainer email="you@your.org">you</maintainer>
+  <maintainer email="jens.aanestad@gmail.com">you</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

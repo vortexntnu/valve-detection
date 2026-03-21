@@ -22,6 +22,7 @@ For each detection it:
 | File | Responsibility |
 |------|---------------|
 | `valve_pose_ros.hpp/.cpp` | ROS node — subscriptions, publishing, NMS, camera data ownership |
+| `ros_utils.hpp/.cpp` | ROS message conversions — `to_bbox`, `make_pose_array`, `make_landmark_array`, `decode_depth_to_float` |
 | `depth_image_processing.hpp/.cpp` | Depth transforms — back-projection, point cloud extraction, depth-to-color pixel mapping |
 | `pose_estimator.hpp/.cpp` | Normal/plane estimation — RANSAC plane fit, ray–plane intersection, rotation matrix, pose |
 | `types.hpp` | Shared data types (`BoundingBox`, `Pose`, `ImageProperties`, `DepthColorExtrinsic`) |
@@ -33,6 +34,14 @@ For each detection it:
 ```bash
 ros2 launch valve_detection valve_detection.launch.py
 ```
+
+### With debug visualization
+
+```bash
+ros2 launch valve_detection valve_detection.launch.py debug_visualize:=true
+```
+
+This enables the additional debug topics listed below (`/valve_poses`, `/valve_detection_depth_colormap`, `/valve_depth_cloud`, `/bbx_annulus_pcl`, `/annulus_plane_pcl`).
 
 ---
 
@@ -76,17 +85,16 @@ The bounding box is reprojected from color image space to depth image space usin
 
 ## Published Topics
 
-| Topic | Type | Description |
-|-------|------|-------------|
-| `/valve_pose` | `geometry_msgs/PoseStamped` | Best detection pose |
-| `/valve_poses` | `geometry_msgs/PoseArray` | All detection poses |
-| `/valve_landmarks` | `vortex_msgs/LandmarkArray` | Poses with landmark type/subtype |
-| `/valve_detection_image` | `sensor_msgs/Image` | Color image with OBB overlays |
-| `/valve_detection_depth_colormap` | `sensor_msgs/Image` | Depth colormap with OBB overlays |
-| `/valve_points` | `sensor_msgs/PointCloud2` | Valve center positions |
-| `/valve_depth_cloud` | `sensor_msgs/PointCloud2` | Points used for plane fit |
-| `/bbx_annulus_pcl` | `sensor_msgs/PointCloud2` | Debug: extracted annulus points |
-| `/annulus_plane_pcl` | `sensor_msgs/PointCloud2` | Debug: RANSAC plane inliers |
+| Topic | Type | Always | Description |
+|-------|------|--------|-------------|
+| `/valve_landmarks` | `vortex_msgs/LandmarkArray` | Yes | All detection poses with landmark type/subtype |
+| `/valve_poses` | `geometry_msgs/PoseArray` | Debug | All detection poses |
+| `/valve_detection_depth_colormap` | `sensor_msgs/Image` | Debug | Depth colormap with OBB overlays |
+| `/valve_depth_cloud` | `sensor_msgs/PointCloud2` | Debug | Points used for plane fit |
+| `/bbx_annulus_pcl` | `sensor_msgs/PointCloud2` | Debug | Extracted annulus points |
+| `/annulus_plane_pcl` | `sensor_msgs/PointCloud2` | Debug | RANSAC plane inliers |
+
+Debug topics are only published when `debug_visualize:=true`.
 
 ---
 
@@ -100,10 +108,11 @@ The bounding box is reprojected from color image space to depth image space usin
 | `valve_handle_offset` | `0.05` | Shift along plane normal to reach handle (m) |
 | `iou_duplicate_threshold` | `0.5` | IoU threshold for NMS |
 | `yolo_img_width/height` | `640` | YOLO letterbox reference size for bbox remapping |
-| `debug_visualize` | `false` | Publish annulus and plane point clouds |
+| `debug_visualize` | `false` | Enable debug visualization topics |
 | `output_frame_id` | `camera_color_optical_frame` | TF frame for published poses |
+| `depth_to_color_tx/ty/tz` | `-0.059, 0, 0` | Depth-to-color extrinsic translation (m) |
 
-Camera intrinsics (`color_fx/fy/cx/cy`, `depth_fx/fy/cx/cy`) and distortion coefficients are set in `config/valve_detection_params.yaml`. Depth intrinsics can alternatively be received from a `CameraInfo` topic.
+Camera intrinsics (`color_fx/fy/cx/cy`, `depth_fx/fy/cx/cy`) and distortion coefficients are set in `config/valve_detection_params.yaml`. Both color and depth intrinsics can alternatively be received from `CameraInfo` topics and will override the config values.
 
 ---
 
@@ -113,7 +122,7 @@ Camera intrinsics (`color_fx/fy/cx/cy`, `depth_fx/fy/cx/cy`) and distortion coef
 |-------|---------------|
 | No poses published | Too few plane inliers — lower `plane_ransac_threshold` or increase `annulus_radius_ratio` |
 | Pose position offset | Wrong `valve_handle_offset` or incorrect camera intrinsics/extrinsic |
-| OBB misaligned on depth colormap | Incorrect depth-to-color extrinsic in `d555_depth_to_color_extrinsic()` |
+| OBB misaligned on depth colormap | Incorrect depth-to-color extrinsic — check `depth_to_color_tx/ty/tz` in the config |
 | Duplicate poses | Lower `iou_duplicate_threshold` |
 
 ---

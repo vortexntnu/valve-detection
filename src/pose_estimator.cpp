@@ -120,6 +120,8 @@ Eigen::Vector3f PoseEstimator::compute_plane_normal(
 Eigen::Vector3f PoseEstimator::find_ray_plane_intersection(
     const pcl::ModelCoefficients::Ptr& coefficients,
     const Eigen::Vector3f& ray_direction) const {
+    // A plane ax+by+cz+d=0 has 4 coefficients: [a, b, c, d].
+    // We need all 4 here: [a,b,c] for the normal and d for the offset.
     if (!coefficients || coefficients->values.size() < 4)
         return Eigen::Vector3f::Zero();
 
@@ -204,10 +206,9 @@ Eigen::Matrix3f PoseEstimator::create_rotation_matrix(
 
 // Extracts a point cloud from the depth image, fits a plane, and returns the
 // valve pose.
-bool PoseEstimator::compute_pose_from_depth(
+PoseResult PoseEstimator::compute_pose_from_depth(
     const cv::Mat& depth_image,
     const BoundingBox& bbox_org,
-    Pose& out_pose,
     pcl::PointCloud<pcl::PointXYZ>::Ptr annulus_dbg,
     pcl::PointCloud<pcl::PointXYZ>::Ptr plane_dbg,
     bool debug_visualize) const {
@@ -224,7 +225,7 @@ bool PoseEstimator::compute_pose_from_depth(
     }
 
     if (cloud->points.size() < 4)
-        return false;
+        return {};
 
     if (debug_visualize && annulus_dbg)
         *annulus_dbg += *cloud;
@@ -232,7 +233,7 @@ bool PoseEstimator::compute_pose_from_depth(
     pcl::ModelCoefficients::Ptr coeff(new pcl::ModelCoefficients);
     pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
     if (!segment_plane(cloud, coeff, inliers))
-        return false;
+        return {};
 
     if (debug_visualize && plane_dbg) {
         for (int idx : inliers->indices)
@@ -245,18 +246,42 @@ bool PoseEstimator::compute_pose_from_depth(
     const Eigen::Vector3f ray = get_ray_direction(bbox_org);
     const Eigen::Vector3f normal = compute_plane_normal(coeff, ray);
     if (normal.isZero())
-        return false;
+        return {};
 
     const Eigen::Vector3f pos = find_ray_plane_intersection(coeff, ray);
     if (pos.isZero())
-        return false;
+        return {};
 
-    out_pose.position = shift_point_along_normal(pos, normal);
+    PoseResult out;
+    out.result.position = shift_point_along_normal(pos, normal);
     const Eigen::Matrix3f rot =
         create_rotation_matrix(coeff, normal, bbox_org.theta);
-    out_pose.orientation = Eigen::Quaternionf(rot).normalized();
+    out.result.orientation = Eigen::Quaternionf(rot).normalized();
 
-    return true;
+    // The aligned path (has_depth_props_) produces the pose in the color camera
+    // frame.  Transform it into the depth camera frame so the published frame_id
+    // matches the depth optical frame.
+    //   P_depth = R^T * (P_color - t)
+    //   R_depth = R^T * R_color
+    if (has_depth_props_) {
+        const Eigen::Matrix3f R_dc = depth_color_extrinsic_.R.transpose();
+        out.result.position =
+            R_dc * (out.result.position - depth_color_extrinsic_.t);
+        out.result.orientation = Eigen::Quaternionf(R_dc * rot).normalized();
+    }
+
+    out.result_valid = true;
+    return out;
+
+    // Currently code:
+    //   1. Transform N depth points into color frame (in extract_bbox_pcl_aligned)
+    //   2. Fit the plane in color frame
+    //   3. Transform 1 result point back to depth frame
+
+    // The more optimal approach would be to work entirely in depth frame from the start:
+    //   1. Map the bbox from color → depth (a single transform of a few corners)
+    //   2. Extract points and fit the plane directly in depth frame
+    //   3. Cast the ray using depth intrinsics — no back-and-forth needed
 }
 
 }  // namespace valve_detection

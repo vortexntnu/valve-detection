@@ -3,20 +3,23 @@
 // projection.
 #include "valve_detection/depth_image_processing.hpp"
 #include <Eigen/Dense>
+#include <algorithm>
 #include <cmath>
 #include <limits>
+#include <opencv2/calib3d.hpp>
+#include <opencv2/imgproc.hpp>
 
 namespace valve_detection {
 
 // Back-projects a depth pixel (u, v, depth) to a 3D point using camera
 // intrinsics.
-void project_pixel_to_point(int u,
-                            int v,
-                            float depth,
-                            double fx,
-                            double fy,
-                            double cx,
-                            double cy,
+void project_pixel_to_point(const int u,
+                            const int v,
+                            const float depth,
+                            const double fx,
+                            const double fy,
+                            const double cx,
+                            const double cy,
                             pcl::PointXYZ& out) {
     if (depth <= 0.0f || std::isnan(depth) || std::isinf(depth)) {
         out.x = out.y = out.z = std::numeric_limits<float>::quiet_NaN();
@@ -32,21 +35,27 @@ void project_pixel_to_point(int u,
 void extract_annulus_pcl(const cv::Mat& depth_image,
                          const BoundingBox& bbox,
                          const ImageProperties& img_props,
-                         float annulus_radius_ratio,
+                         const float annulus_radius_ratio,
                          pcl::PointCloud<pcl::PointXYZ>::Ptr& out) {
     out->clear();
 
     const float cx = bbox.center_x;
     const float cy = bbox.center_y;
+    // Outer ellipse half-extents match the bounding box.
     const float outer_rx = bbox.size_x * 0.5f;
     const float outer_ry = bbox.size_y * 0.5f;
 
+    // Require at least 4 pixels in each dimension (2 px half-extent) before
+    // sampling — smaller boxes contain no usable depth points.
     if (outer_rx < 2.0f || outer_ry < 2.0f)
         return;
 
+    // Inner ellipse is scaled down by annulus_radius_ratio, creating a ring
+    // that avoids the central hub and samples only the valve rim.
     const float inner_rx = outer_rx * annulus_radius_ratio;
     const float inner_ry = outer_ry * annulus_radius_ratio;
 
+    // Bounding rectangle of the outer ellipse in pixel space.
     const int u0 = static_cast<int>(std::floor(cx - outer_rx));
     const int u1 = static_cast<int>(std::ceil(cx + outer_rx));
     const int v0 = static_cast<int>(std::floor(cy - outer_ry));
@@ -59,10 +68,14 @@ void extract_annulus_pcl(const cv::Mat& depth_image,
             if (u < 0 || u >= depth_image.cols)
                 continue;
 
+            // Normalise pixel offset by the outer half-extents; the point is
+            // inside the outer ellipse when the sum of squares ≤ 1.
             const float dxo = (u - cx) / outer_rx;
             const float dyo = (v - cy) / outer_ry;
             const bool inside_outer = (dxo * dxo + dyo * dyo) <= 1.0f;
 
+            // Same test for the inner ellipse; keep only points outside it
+            // to form the annular ring.
             const float dxi = (u - cx) / inner_rx;
             const float dyi = (v - cy) / inner_ry;
             const bool outside_inner = (dxi * dxi + dyi * dyi) > 1.0f;
@@ -70,12 +83,14 @@ void extract_annulus_pcl(const cv::Mat& depth_image,
             if (!inside_outer || !outside_inner)
                 continue;
 
+            // Back-project the depth pixel to a 3-D point in camera space.
             const float z = depth_image.at<float>(v, u);
             pcl::PointXYZ p;
             project_pixel_to_point(u, v, z, img_props.intr.fx,
                                    img_props.intr.fy, img_props.intr.cx,
                                    img_props.intr.cy, p);
 
+            // Discard invalid points (zero/NaN depth produces NaN coords).
             if (!std::isnan(p.x) && !std::isnan(p.y) && !std::isnan(p.z)) {
                 out->points.push_back(p);
             }
@@ -87,23 +102,6 @@ void extract_annulus_pcl(const cv::Mat& depth_image,
     out->is_dense = false;
 }
 
-// Returns hardcoded depth-to-color extrinsic for Intel RealSense D555.
-// Verify with: ros2 topic echo /realsense/extrinsics/depth_to_color
-DepthColorExtrinsic d555_depth_to_color_extrinsic() {
-    DepthColorExtrinsic extr;
-    // Both depth and color optical frames share the same body-to-optical
-    // rotation, so R is identity.
-    extr.R = Eigen::Matrix3f::Identity();
-    // t = depth origin expressed in color optical frame.
-    // Color is 0.059 m in -y (rightward) of depth in body frame, so depth is
-    // +0.059 m in y (leftward) of color. Converting to optical frame:
-    //   t_optical = R_body_to_optical * [0, +0.059, 0]
-    //             = [[0,-1,0],[0,0,-1],[1,0,0]] * [0, 0.059, 0]
-    //             = [-0.059, 0, 0]
-    extr.t = Eigen::Vector3f(-0.059f, 0.0f, 0.0f);
-    return extr;
-}
-
 // Like extract_annulus_pcl but transforms depth pixels into the color frame
 // before the annulus test.
 void extract_annulus_pcl_aligned(const cv::Mat& depth_image,
@@ -111,24 +109,29 @@ void extract_annulus_pcl_aligned(const cv::Mat& depth_image,
                                  const ImageProperties& color_props,
                                  const ImageProperties& depth_props,
                                  const DepthColorExtrinsic& extr,
-                                 float annulus_radius_ratio,
+                                 const float annulus_radius_ratio,
                                  pcl::PointCloud<pcl::PointXYZ>::Ptr& out) {
     out->clear();
 
+    // Annulus defined in color-image coordinates.
     const float cx_c = color_bbox.center_x;
     const float cy_c = color_bbox.center_y;
     const float outer_rx = color_bbox.size_x * 0.5f;
     const float outer_ry = color_bbox.size_y * 0.5f;
 
+    // Require at least 4 pixels in each dimension (2 px half-extent) before
+    // sampling — smaller boxes contain no usable depth points.
     if (outer_rx < 2.0f || outer_ry < 2.0f)
         return;
 
+    // Inner ellipse scaled down by annulus_radius_ratio, forming the ring.
     const float inner_rx = outer_rx * annulus_radius_ratio;
     const float inner_ry = outer_ry * annulus_radius_ratio;
 
-    // Approximate scale between depth and color focal lengths to define a
-    // coarse search region in depth-image coordinates.  A 30-pixel margin
-    // accounts for the lateral offset introduced by the extrinsic.
+    // The depth and color images have different resolutions and focal lengths.
+    // Scale color-space bbox bounds into depth-image coordinates to get a
+    // coarse candidate region, then add a margin to cover the lateral shift
+    // introduced by the depth-to-color translation.
     const float scale =
         (depth_props.intr.fx > 0.0 && color_props.intr.fx > 0.0)
             ? static_cast<float>(depth_props.intr.fx / color_props.intr.fx)
@@ -152,7 +155,7 @@ void extract_annulus_pcl_aligned(const cv::Mat& depth_image,
             if (z_d <= 0.0f || std::isnan(z_d) || std::isinf(z_d))
                 continue;
 
-            // Back-project using depth intrinsics.
+            // Back-project depth pixel to 3-D point in depth camera frame.
             Eigen::Vector3f P_d;
             P_d.x() = static_cast<float>((u_d - depth_props.intr.cx) * z_d /
                                          depth_props.intr.fx);
@@ -160,28 +163,32 @@ void extract_annulus_pcl_aligned(const cv::Mat& depth_image,
                                          depth_props.intr.fy);
             P_d.z() = z_d;
 
-            // Transform into color camera frame.
+            // Apply extrinsic to move the point into the color camera frame,
+            // where the annulus is defined.
             const Eigen::Vector3f P_c = extr.R * P_d + extr.t;
             if (P_c.z() <= 0.0f)
                 continue;
 
-            // Project onto color image plane.
+            // Project the color-frame point onto the color image plane.
             const float u_c = static_cast<float>(
                 color_props.intr.fx * P_c.x() / P_c.z() + color_props.intr.cx);
             const float v_c = static_cast<float>(
                 color_props.intr.fy * P_c.y() / P_c.z() + color_props.intr.cy);
 
-            // Elliptic annulus test in color-image space.
+            // Normalise offset by outer half-extents; keep only points inside
+            // the outer ellipse (sum of squares ≤ 1).
             const float dxo = (u_c - cx_c) / outer_rx;
             const float dyo = (v_c - cy_c) / outer_ry;
             if (dxo * dxo + dyo * dyo > 1.0f)
                 continue;  // outside outer ellipse
 
+            // Discard points inside the inner ellipse to form the ring.
             const float dxi = (u_c - cx_c) / inner_rx;
             const float dyi = (v_c - cy_c) / inner_ry;
             if (dxi * dxi + dyi * dyi <= 1.0f)
                 continue;  // inside inner ellipse
 
+            // Store the point in the color camera frame.
             pcl::PointXYZ p;
             p.x = P_c.x();
             p.y = P_c.y();
@@ -277,9 +284,9 @@ void extract_bbox_pcl_aligned(const cv::Mat& depth_image,
 
 // Projects a color image pixel to depth image coordinates using the full
 // intrinsic + extrinsic pipeline.
-cv::Point2f project_color_pixel_to_depth(float u_c,
-                                         float v_c,
-                                         float Z,
+cv::Point2f project_color_pixel_to_depth(const float u_c,
+                                         const float v_c,
+                                         const float Z,
                                          const ImageProperties& color_props,
                                          const ImageProperties& depth_props,
                                          const DepthColorExtrinsic& extr) {
@@ -304,6 +311,102 @@ cv::Point2f project_color_pixel_to_depth(float u_c,
         static_cast<float>(depth_props.intr.fy) * Pd.y() / Pd.z() +
         static_cast<float>(depth_props.intr.cy);
     return {u_d, v_d};
+}
+
+// Corrects the bbox center for lens distortion using the given intrinsics.
+BoundingBox undistort_bbox(const BoundingBox& bbox, const CameraIntrinsics& intr) {
+    const cv::Mat K = (cv::Mat_<double>(3, 3) << intr.fx, 0, intr.cx,
+                                                 0, intr.fy, intr.cy,
+                                                 0, 0, 1);
+    const cv::Mat D = (cv::Mat_<double>(5, 1) << intr.dist[0], intr.dist[1],
+                                                 intr.dist[2], intr.dist[3],
+                                                 intr.dist[4]);
+    // Build a RotatedRect and extract all 4 corners.
+    const float angle_deg = bbox.theta * 180.0f / static_cast<float>(M_PI);
+    cv::RotatedRect rrect(cv::Point2f(bbox.center_x, bbox.center_y),
+                          cv::Size2f(bbox.size_x, bbox.size_y), angle_deg);
+    cv::Point2f corners[4];
+    rrect.points(corners);
+
+    // Undistort all 4 corners.
+    std::vector<cv::Point2f> pts(corners, corners + 4);
+    std::vector<cv::Point2f> undistorted;
+    cv::undistortPoints(pts, undistorted, K, D, cv::noArray(), K);
+
+    // Refit an OBB to the undistorted corners.
+    cv::RotatedRect fitted = cv::minAreaRect(undistorted);
+
+    BoundingBox result = bbox;
+    result.center_x = fitted.center.x;
+    result.center_y = fitted.center.y;
+    result.size_x = fitted.size.width;
+    result.size_y = fitted.size.height;
+    result.theta = fitted.angle * static_cast<float>(M_PI) / 180.0f;
+    return result;
+}
+
+// Greedy NMS: sorts by score descending, keeps at most 2 non-overlapping boxes.
+std::vector<size_t> filter_duplicate_detections(
+    const std::vector<std::pair<float, BoundingBox>>& scored_boxes,
+    float iou_duplicate_threshold) {
+    const size_t n = scored_boxes.size();
+    if (n == 0)
+        return {};
+
+    std::vector<std::pair<float, size_t>> order;
+    order.reserve(n);
+    for (size_t i = 0; i < n; ++i)
+        order.emplace_back(scored_boxes[i].first, i);
+    std::sort(order.begin(), order.end(),
+              [](const auto& a, const auto& b) { return a.first > b.first; });
+
+    std::vector<size_t> kept;
+    std::vector<bool> suppressed(n, false);
+
+    for (size_t si = 0; si < order.size() && kept.size() < 2; ++si) {
+        const size_t i = order[si].second;
+        if (suppressed[i])
+            continue;
+
+        kept.push_back(i);
+
+        const BoundingBox& bi = scored_boxes[i].second;
+        const float ai = bi.size_x * bi.size_y;
+        const float bx1i = bi.center_x - bi.size_x * 0.5f;
+        const float by1i = bi.center_y - bi.size_y * 0.5f;
+        const float bx2i = bi.center_x + bi.size_x * 0.5f;
+        const float by2i = bi.center_y + bi.size_y * 0.5f;
+
+        for (size_t sj = si + 1; sj < order.size(); ++sj) {
+            const size_t j = order[sj].second;
+            if (suppressed[j])
+                continue;
+
+            const BoundingBox& bj = scored_boxes[j].second;
+            const float aj = bj.size_x * bj.size_y;
+            const float bx1j = bj.center_x - bj.size_x * 0.5f;
+            const float by1j = bj.center_y - bj.size_y * 0.5f;
+            const float bx2j = bj.center_x + bj.size_x * 0.5f;
+            const float by2j = bj.center_y + bj.size_y * 0.5f;
+
+            const float ix1 = std::max(bx1i, bx1j);
+            const float iy1 = std::max(by1i, by1j);
+            const float ix2 = std::min(bx2i, bx2j);
+            const float iy2 = std::min(by2i, by2j);
+
+            if (ix2 <= ix1 || iy2 <= iy1)
+                continue;
+
+            const float inter = (ix2 - ix1) * (iy2 - iy1);
+            const float iou = inter / (ai + aj - inter);
+            const float iom = inter / std::min(ai, aj);
+
+            if (iou > iou_duplicate_threshold || iom > 0.7f)
+                suppressed[j] = true;
+        }
+    }
+
+    return kept;
 }
 
 }  // namespace valve_detection

@@ -1,11 +1,14 @@
 #pragma once
 #include <Eigen/Dense>
+#include <array>
 #include <cstdint>
 
 namespace valve_detection {
 
 struct CameraIntrinsics {
     double fx{0}, fy{0}, cx{0}, cy{0};
+    // Plumb-bob distortion coefficients [k1, k2, p1, p2, k3].
+    std::array<double, 5> dist{0, 0, 0, 0, 0};
 };
 
 struct ImageDimensions {
@@ -28,6 +31,11 @@ struct BoundingBox {
 struct Pose {
     Eigen::Vector3f position{Eigen::Vector3f::Zero()};
     Eigen::Quaternionf orientation{Eigen::Quaternionf::Identity()};
+};
+
+struct PoseResult {
+    Pose result;
+    bool result_valid{false};
 };
 
 // Rigid transform from depth camera frame to color camera frame.
