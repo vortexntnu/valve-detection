@@ -18,12 +18,15 @@ BoundingBox to_bbox(const vision_msgs::msg::BoundingBox2D& b);
 
 // Builds a PoseArray message from a list of poses.
 geometry_msgs::msg::PoseArray make_pose_array(
-    const std::vector<Pose>& poses, const std_msgs::msg::Header& header);
+    const std::vector<Pose>& poses,
+    const std_msgs::msg::Header& header);
 
 // Builds a LandmarkArray message from a list of poses.
 vortex_msgs::msg::LandmarkArray make_landmark_array(
-    const std::vector<Pose>& poses, const std_msgs::msg::Header& header,
-    int type, int subtype);
+    const std::vector<Pose>& poses,
+    const std_msgs::msg::Header& header,
+    int type,
+    int subtype);
 
 // Decodes a ROS depth image to a CV_32FC1 mat in metres.
 cv::Mat decode_depth_to_float(

@@ -111,8 +111,8 @@ void ValvePoseNode::setup_publishers(const rclcpp::QoS& qos) {
 
     pose_pub_ =
         create_publisher<geometry_msgs::msg::PoseArray>(pose_topic, qos);
-    depth_cloud_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
-        depth_cloud_topic, qos);
+    depth_cloud_pub_ =
+        create_publisher<sensor_msgs::msg::PointCloud2>(depth_cloud_topic, qos);
     depth_colormap_pub_ =
         create_publisher<sensor_msgs::msg::Image>(depth_color_topic, qos);
     annulus_pub_ =
@@ -148,8 +148,7 @@ void ValvePoseNode::setup_subscribers(const rclcpp::QoS& qos) {
 
     sync_ = std::make_shared<message_filters::Synchronizer<SyncPolicy>>(
         SyncPolicy(10), depth_sub_, det_sub_);
-    sync_->registerCallback(
-        std::bind(&ValvePoseNode::sync_cb, this, _1, _2));
+    sync_->registerCallback(std::bind(&ValvePoseNode::sync_cb, this, _1, _2));
 }
 
 // One-shot callback that overrides color intrinsics and distortion from the
@@ -225,9 +224,8 @@ void ValvePoseNode::sync_cb(
         // Publish empty arrays to clear stale data from previous detections.
         if (debug_visualize_ && pose_pub_)
             pose_pub_->publish(make_pose_array({}, depth->header));
-        landmark_pub_->publish(
-            make_landmark_array({}, depth->header, landmark_type_,
-                                landmark_subtype_));
+        landmark_pub_->publish(make_landmark_array(
+            {}, depth->header, landmark_type_, landmark_subtype_));
         if (publish_colormap) {
             depth_colormap_pub_->publish(
                 *cv_bridge::CvImage(depth->header, "bgr8", depth_color)
@@ -327,9 +325,8 @@ void ValvePoseNode::sync_cb(
 
     if (debug_visualize_ && pose_pub_)
         pose_pub_->publish(make_pose_array(poses, pose_header));
-    landmark_pub_->publish(
-        make_landmark_array(poses, pose_header, landmark_type_,
-                            landmark_subtype_));
+    landmark_pub_->publish(make_landmark_array(
+        poses, pose_header, landmark_type_, landmark_subtype_));
 }
 
 }  // namespace valve_detection

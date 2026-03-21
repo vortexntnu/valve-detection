@@ -17,7 +17,8 @@ BoundingBox to_bbox(const vision_msgs::msg::BoundingBox2D& b) {
 }
 
 geometry_msgs::msg::PoseArray make_pose_array(
-    const std::vector<Pose>& poses, const std_msgs::msg::Header& header) {
+    const std::vector<Pose>& poses,
+    const std_msgs::msg::Header& header) {
     geometry_msgs::msg::PoseArray msg;
     msg.header = header;
     msg.poses.reserve(poses.size());
@@ -36,8 +37,10 @@ geometry_msgs::msg::PoseArray make_pose_array(
 }
 
 vortex_msgs::msg::LandmarkArray make_landmark_array(
-    const std::vector<Pose>& poses, const std_msgs::msg::Header& header,
-    int type, int subtype) {
+    const std::vector<Pose>& poses,
+    const std_msgs::msg::Header& header,
+    int type,
+    int subtype) {
     vortex_msgs::msg::LandmarkArray out;
     out.header = header;
     out.landmarks.reserve(poses.size());

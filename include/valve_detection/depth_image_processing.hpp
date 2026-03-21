@@ -60,7 +60,8 @@ cv::Point2f project_color_pixel_to_depth(const float u_c,
                                          const DepthColorExtrinsic& extr);
 
 // Returns undistorted copy of bbox (center_x/y corrected for lens distortion).
-BoundingBox undistort_bbox(const BoundingBox& bbox, const CameraIntrinsics& intr);
+BoundingBox undistort_bbox(const BoundingBox& bbox,
+                           const CameraIntrinsics& intr);
 
 // Greedy NMS: returns indices of kept detections (max 2).
 // scored_boxes: (score, bbox) pairs. Two boxes are duplicates when IoMin

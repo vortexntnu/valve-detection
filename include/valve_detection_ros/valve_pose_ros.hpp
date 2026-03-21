@@ -25,8 +25,8 @@
 #include <string>
 #include <vector>
 #include "vortex_msgs/msg/landmark_array.hpp"
-#include "vortex_msgs/msg/landmark_type.hpp"
 #include "vortex_msgs/msg/landmark_subtype.hpp"
+#include "vortex_msgs/msg/landmark_type.hpp"
 
 namespace valve_detection {
 
@@ -84,7 +84,8 @@ class ValvePoseNode : public rclcpp::Node {
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr depth_colormap_pub_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr annulus_pub_;
     rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr plane_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr depth_cloud_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr
+        depth_cloud_pub_;
 
     float depth_colormap_vmin_;
     float depth_colormap_vmax_;

@@ -314,13 +314,12 @@ cv::Point2f project_color_pixel_to_depth(const float u_c,
 }
 
 // Corrects the bbox center for lens distortion using the given intrinsics.
-BoundingBox undistort_bbox(const BoundingBox& bbox, const CameraIntrinsics& intr) {
-    const cv::Mat K = (cv::Mat_<double>(3, 3) << intr.fx, 0, intr.cx,
-                                                 0, intr.fy, intr.cy,
-                                                 0, 0, 1);
+BoundingBox undistort_bbox(const BoundingBox& bbox,
+                           const CameraIntrinsics& intr) {
+    const cv::Mat K = (cv::Mat_<double>(3, 3) << intr.fx, 0, intr.cx, 0,
+                       intr.fy, intr.cy, 0, 0, 1);
     const cv::Mat D = (cv::Mat_<double>(5, 1) << intr.dist[0], intr.dist[1],
-                                                 intr.dist[2], intr.dist[3],
-                                                 intr.dist[4]);
+                       intr.dist[2], intr.dist[3], intr.dist[4]);
     // Build a RotatedRect and extract all 4 corners.
     const float angle_deg = bbox.theta * 180.0f / static_cast<float>(M_PI);
     cv::RotatedRect rrect(cv::Point2f(bbox.center_x, bbox.center_y),

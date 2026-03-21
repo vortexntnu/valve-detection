@@ -123,4 +123,3 @@
     # Must match the depth optical frame in the robot's TF tree.
     # See: auv_setup/description/moby.urdf.xacro
     output_frame_id: "moby/front_camera_depth_optical"
-

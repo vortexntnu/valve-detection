@@ -259,8 +259,8 @@ PoseResult PoseEstimator::compute_pose_from_depth(
     out.result.orientation = Eigen::Quaternionf(rot).normalized();
 
     // The aligned path (has_depth_props_) produces the pose in the color camera
-    // frame.  Transform it into the depth camera frame so the published frame_id
-    // matches the depth optical frame.
+    // frame.  Transform it into the depth camera frame so the published
+    // frame_id matches the depth optical frame.
     //   P_depth = R^T * (P_color - t)
     //   R_depth = R^T * R_color
     if (has_depth_props_) {
@@ -274,12 +274,15 @@ PoseResult PoseEstimator::compute_pose_from_depth(
     return out;
 
     // Currently code:
-    //   1. Transform N depth points into color frame (in extract_bbox_pcl_aligned)
+    //   1. Transform N depth points into color frame (in
+    //   extract_bbox_pcl_aligned)
     //   2. Fit the plane in color frame
     //   3. Transform 1 result point back to depth frame
 
-    // The more optimal approach would be to work entirely in depth frame from the start:
-    //   1. Map the bbox from color → depth (a single transform of a few corners)
+    // The more optimal approach would be to work entirely in depth frame from
+    // the start:
+    //   1. Map the bbox from color → depth (a single transform of a few
+    //   corners)
     //   2. Extract points and fit the plane directly in depth frame
     //   3. Cast the ray using depth intrinsics — no back-and-forth needed
 }
