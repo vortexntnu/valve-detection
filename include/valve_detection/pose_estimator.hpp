@@ -50,7 +50,8 @@ class PoseEstimator {
         const Eigen::Vector3f& ray_direction) const;
     Eigen::Vector3f find_ray_plane_intersection(
         const pcl::ModelCoefficients::Ptr& coeff,
-        const Eigen::Vector3f& ray_direction) const;
+        const Eigen::Vector3f& ray_direction,
+        const Eigen::Vector3f& ray_origin = Eigen::Vector3f::Zero()) const;
     Eigen::Vector3f shift_point_along_normal(
         const Eigen::Vector3f& intersection_point,
         const Eigen::Vector3f& plane_normal) const;
@@ -58,6 +59,14 @@ class PoseEstimator {
         const pcl::ModelCoefficients::Ptr& coefficients,
         const Eigen::Vector3f& plane_normal,
         float angle) const;
+    // Variant that works entirely in depth frame: color rays are rotated by
+    // R_dc = R^T before intersecting the depth-frame plane.
+    Eigen::Matrix3f create_rotation_matrix_depth(
+        const pcl::ModelCoefficients::Ptr& coefficients,
+        const Eigen::Vector3f& plane_normal,
+        float angle,
+        const Eigen::Vector3f& ray_origin,
+        const Eigen::Matrix3f& R_dc) const;
 
     ImageProperties color_image_properties_{};
     ImageProperties depth_image_properties_{};

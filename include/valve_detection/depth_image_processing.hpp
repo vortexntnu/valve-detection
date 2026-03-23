@@ -25,11 +25,10 @@ void extract_annulus_pcl(
     const float annulus_radius_ratio,  // inner radius = outer*ratio
     pcl::PointCloud<pcl::PointXYZ>::Ptr& out);
 
-// Like extract_annulus_pcl but with proper depth-to-color alignment.
-// Iterates depth pixels, back-projects with depth intrinsics, applies the
-// extrinsic transform, then checks whether the resulting color-frame
-// projection falls inside the annulus.  Output points are in the color
-// camera frame.
+// Iterates depth pixels, back-projects each with depth intrinsics, applies
+// the extrinsic transform, then checks whether the resulting color-frame
+// projection falls inside the elliptic annulus defined by color_bbox.
+// Output points are in the color camera frame.
 void extract_annulus_pcl_aligned(
     const cv::Mat& depth_image,     // CV_32FC1 meters, depth frame
     const BoundingBox& color_bbox,  // annulus defined in color pixels
@@ -42,6 +41,18 @@ void extract_annulus_pcl_aligned(
 // Extracts all valid depth points whose color-frame projection falls inside
 // the oriented bounding box.  Output points are in the color camera frame.
 void extract_bbox_pcl_aligned(
+    const cv::Mat& depth_image,     // CV_32FC1 meters, depth frame
+    const BoundingBox& color_bbox,  // OBB defined in color pixels
+    const ImageProperties& color_props,
+    const ImageProperties& depth_props,
+    const DepthColorExtrinsic& extrinsic,
+    pcl::PointCloud<pcl::PointXYZ>::Ptr& out);
+
+// Projects the 4 corners of the color OBB into depth image space once, fits
+// an OBB to those projected corners, then tests depth pixels directly against
+// that depth-image OBB — no per-pixel matrix multiply needed.  Output points
+// are stored in the depth camera frame.
+void extract_bbox_pcl_depth(
     const cv::Mat& depth_image,     // CV_32FC1 meters, depth frame
     const BoundingBox& color_bbox,  // OBB defined in color pixels
     const ImageProperties& color_props,
