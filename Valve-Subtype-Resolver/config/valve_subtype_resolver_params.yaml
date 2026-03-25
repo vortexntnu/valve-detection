@@ -1,0 +1,32 @@
+/**:
+  ros__parameters:
+    # ── Inputs ────────────────────────────────────────────────────────────────
+    # Landmarks published by valve_detection (subtype unset, 0).
+    landmarks_sub_topic: "/valve_landmarks"
+
+    # ── Output ────────────────────────────────────────────────────────────────
+    # Republished landmarks with subtype resolved.
+    landmarks_pub_topic: "/valve_landmarks_typed"
+
+    # ── Robot identity ────────────────────────────────────────────────────────
+    # Prepended to all TF frame names (e.g. "moby" → "moby/odom").
+    # Override at launch time to switch between robots.
+    drone: "moby"
+
+    # ── TF ────────────────────────────────────────────────────────────────────
+    # Base name of the world/odometry frame (without drone prefix).
+    # The full frame used for TF lookup is: <drone>/<odom_frame>.
+    # The full chain front_camera_depth_optical → base_link → odom must be
+    # available in the TF tree (static + dynamic).
+    odom_frame: "odom"
+
+    # ── Subtype classification ─────────────────────────────────────────────
+    # Threshold on |world_normal.z|.
+    #
+    # The valve plane normal is rotated into the world frame.  If its Z
+    # component exceeds this threshold the valve face is classified as:
+    #   VALVE_VERTICAL   (1) — normal points mostly up/down (wheel axis is vertical)
+    #   VALVE_HORIZONTAL (2) — normal is mostly in the XY plane (wheel axis is horizontal)
+    #
+    # 0.5 corresponds to a 45-degree tilt boundary.
+    vertical_threshold: 0.5

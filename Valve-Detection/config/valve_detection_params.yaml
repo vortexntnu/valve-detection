@@ -1,0 +1,134 @@
+/**:
+  ros__parameters:
+    # ── Inputs ────────────────────────────────────────────────────────────────
+    # depth_image_sub_topic: "/realsense/D555_409122300281_Depth"
+    depth_image_sub_topic: "/camera/camera/depth/image_rect_raw"
+    detections_sub_topic: "/yolo_obb_object_detection/detections"
+
+    # Depth camera-info topic (optional – used to load depth intrinsics if published).
+    # Using the realsense depth camera_info since the depth image is from the realsense bag.
+    depth_image_info_topic: "/camera/camera/depth/camera_info"
+
+    # Color camera-info topic (optional – overrides the fallback params below if published).
+    color_image_info_topic: "/moby/front_camera/camera_info"
+
+    # Color camera intrinsics – fallback values used when color_image_info_topic is not published.
+    # Source: /camera/camera/color/camera_info
+    color_fx: 452.121521
+    color_fy: 451.737976
+    color_cx: 438.254059
+    color_cy: 248.703217
+    color_image_width: 896
+    color_image_height: 504
+
+    # Distortion coefficients [k1, k2, p1, p2, k3] (plumb_bob model)
+    color_d1: -0.0548105500638485
+    color_d2:  0.0597584918141365
+    color_d3:  0.000486430013552308
+    color_d4:  0.00031599000794813
+    color_d5: -0.0192314591258764
+
+    # Depth camera intrinsics (fallback when depth camera_info is not published)
+    # Source: /camera/camera/depth/camera_info
+    depth_fx: 449.449707
+    depth_fy: 449.449707
+    depth_cx: 444.819946
+    depth_cy: 248.226578
+    depth_image_width: 896
+    depth_image_height: 504
+
+    # ── Depth-to-color extrinsic ──────────────────────────────────────────────
+    # Translation (metres) of the depth origin expressed in the color camera
+    # frame. Rotation is assumed to be identity (both optical frames share the
+    # same orientation for the RealSense D555).
+    # Source: ros2 topic echo /realsense/extrinsics/depth_to_color
+    depth_to_color_tx: -0.059
+    depth_to_color_ty:  0.0
+    depth_to_color_tz:  0.0
+
+    # ── Outputs ───────────────────────────────────────────────────────────────
+    # Primary output consumed by downstream nodes (e.g. EKF, mission planner).
+    landmarks_pub_topic: "/valve_landmarks"
+
+    # ── YOLO letterbox reference size ─────────────────────────────────────────
+    yolo_img_width: 640
+    yolo_img_height: 640
+
+    # ── Annulus and plane fit ─────────────────────────────────────────────────
+    # Fraction of the bounding-box half-size used as the annulus ring radius
+    # (unitless, 0–1). At 0.8 the ring samples the outer 80 % of the box,
+    # avoiding the central hub while staying inside the valve rim.
+    # Tuned empirically on recorded valve footage.
+    annulus_radius_ratio: 0.8
+
+    # Maximum point-to-plane distance (metres) for a depth point to be counted
+    # as a RANSAC inlier. 0.01 m (1 cm) tolerates typical RealSense depth noise
+    # at ~0.5–1 m range without accepting gross outliers.
+    plane_ransac_threshold: 0.01
+
+    # Number of RANSAC iterations. 50 gives >99 % probability of finding a
+    # good plane when the inlier ratio is ≥ 50 %, while keeping CPU load low.
+    plane_ransac_max_iterations: 50
+
+    # ── Duplicate-detection suppression ──────────────────────────────────────
+    # Two bounding boxes are considered the same valve when their
+    # axis-aligned IoU exceeds this threshold OR when the smaller box
+    # overlaps the larger by more than 70 % (intersection-over-minimum).
+    # Maximum 2 landmarks are published per frame.
+    iou_duplicate_threshold: 0.5
+
+    # ── Pose offset ───────────────────────────────────────────────────────────
+    # Shift the estimated position along the plane normal by this amount (metres).
+    # Value taken from the official valve CAD file: distance between the valve
+    # face frame and the inside length of the handle is 0.065 m.
+    valve_handle_offset: 0.065
+
+    # ── Behaviour toggles ─────────────────────────────────────────────────────
+    debug_visualize: false       # enable all debug visualization topics
+
+    # ── Debug visualization (only active when debug_visualize: true) ──────────
+    debug:
+      # All detected valve poses in one PoseArray – useful for visualising
+      # multiple simultaneous detections in Foxglove.
+      valve_poses_pub_topic: "/valve_poses"
+
+      # Annulus point cloud (points sampled inside the bounding-box ring used
+      # for plane fitting) projected into 3D – useful for verifying the depth
+      # extraction region.
+      depth_cloud_pub_topic: "/valve_depth_cloud"
+
+      # Depth image false-coloured with COLORMAP_TURBO and OBB outlines drawn
+      # on top – useful for checking detection alignment on the depth frame.
+      depth_colormap_pub_topic: "/valve_detection_depth_colormap"
+      # Colormap scaling range in raw 16UC1 depth units (millimetres).
+      # Min ~0 mm clips near-zero noise; max ~1125 mm (≈1.1 m) covers the
+      # expected close-range operating distance for valve interaction.
+      depth_colormap_value_min: 0.1
+      depth_colormap_value_max: 1125.5
+
+      # Points sampled from the annulus region of the bounding box, collected
+      # as a byproduct of pose estimation – useful for verifying the depth
+      # extraction region in 3D.
+      annulus_pub_topic: "/bbx_annulus_pcl"
+
+      # RANSAC plane inlier points, collected as a byproduct of pose estimation
+      # – useful for checking that the fitted plane normal (and therefore the
+      # final pose orientation) is correct.
+      plane_pub_topic: "/annulus_plane_pcl"
+
+    # ── Landmark fields ───────────────────────────────────────────────────────
+    landmark_type: 5        # VALVE
+    # subtype is intentionally unset here (0 = UNKNOWN); resolved downstream
+    # by the valve_subtype_resolver node running on the PI.
+
+    # ── Output frame ──────────────────────────────────────────────────────────
+    # TF frame used as the frame_id for all published poses and landmarks.
+    # Must match the depth optical frame in the robot's TF tree.
+    # Depth is from the realsense bag, pretending to be moby/depth_camera/image_depth.
+    # See: auv_setup/description/moby.urdf.xacro
+    output_frame_id: "front_camera_depth_optical"
+    input_color_frame_id: "front_camera_color_optical"
+
+    # Prepended to all TF frame names (e.g. "moby" → "moby/front_camera_depth_optical").
+    # Override at launch time to switch between robots: drone:=orca
+    drone: "moby"
