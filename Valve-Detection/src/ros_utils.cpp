@@ -39,8 +39,7 @@ geometry_msgs::msg::PoseArray make_pose_array(
 vortex_msgs::msg::LandmarkArray make_landmark_array(
     const std::vector<Pose>& poses,
     const std_msgs::msg::Header& header,
-    int type,
-    int subtype) {
+    int type) {
     vortex_msgs::msg::LandmarkArray out;
     out.header = header;
     out.landmarks.reserve(poses.size());
@@ -49,7 +48,7 @@ vortex_msgs::msg::LandmarkArray make_landmark_array(
         lm.header = header;
         lm.id = static_cast<int32_t>(i);
         lm.type.value = type;
-        lm.subtype.value = subtype;
+        lm.subtype.value = 0;  // unset — resolved by valve_subtype_resolver
         lm.pose.pose.position.x = poses[i].position.x();
         lm.pose.pose.position.y = poses[i].position.y();
         lm.pose.pose.position.z = poses[i].position.z();

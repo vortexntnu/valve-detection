@@ -18,9 +18,12 @@ ValvePoseNode::ValvePoseNode(const rclcpp::NodeOptions& options)
     debug_visualize_ = declare_parameter<bool>("debug_visualize");
     iou_duplicate_threshold_ = static_cast<float>(
         declare_parameter<double>("iou_duplicate_threshold"));
-    output_frame_id_ = declare_parameter<std::string>("output_frame_id");
+    const std::string drone = declare_parameter<std::string>("drone", "moby");
+    const std::string frame_base =
+        declare_parameter<std::string>("output_frame_id");
+    output_frame_id_ =
+        frame_base.empty() ? "" : drone + "/" + frame_base;
     landmark_type_ = declare_parameter<int>("landmark_type");
-    landmark_subtype_ = declare_parameter<int>("landmark_subtype");
 
     setup_estimator();
 
@@ -225,7 +228,7 @@ void ValvePoseNode::sync_cb(
         if (debug_visualize_ && pose_pub_)
             pose_pub_->publish(make_pose_array({}, depth->header));
         landmark_pub_->publish(make_landmark_array(
-            {}, depth->header, landmark_type_, landmark_subtype_));
+            {}, depth->header, landmark_type_));
         if (publish_colormap) {
             depth_colormap_pub_->publish(
                 *cv_bridge::CvImage(depth->header, "bgr8", depth_color)
@@ -326,7 +329,7 @@ void ValvePoseNode::sync_cb(
     if (debug_visualize_ && pose_pub_)
         pose_pub_->publish(make_pose_array(poses, pose_header));
     landmark_pub_->publish(make_landmark_array(
-        poses, pose_header, landmark_type_, landmark_subtype_));
+        poses, pose_header, landmark_type_));
 }
 
 }  // namespace valve_detection

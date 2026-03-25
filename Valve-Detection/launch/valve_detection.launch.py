@@ -16,6 +16,12 @@ def generate_launch_description():
         'valve_detection_params.yaml',
     )
 
+    drone_arg = DeclareLaunchArgument(
+        'drone',
+        default_value='moby',
+        description='Robot name, prepended to TF frame IDs (e.g. moby, orca)',
+    )
+
     debug_visualize_arg = DeclareLaunchArgument(
         'debug_visualize',
         default_value='false',
@@ -34,11 +40,14 @@ def generate_launch_description():
                 name='valve_pose_node',
                 parameters=[
                     cfg,
-                    {'debug_visualize': LaunchConfiguration('debug_visualize')},
+                    {
+                        'drone': LaunchConfiguration('drone'),
+                        'debug_visualize': LaunchConfiguration('debug_visualize'),
+                    },
                 ],
             )
         ],
         output='screen',
     )
 
-    return LaunchDescription([debug_visualize_arg, container])
+    return LaunchDescription([drone_arg, debug_visualize_arg, container])

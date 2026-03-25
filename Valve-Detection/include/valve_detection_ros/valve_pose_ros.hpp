@@ -59,7 +59,6 @@ class ValvePoseNode : public rclcpp::Node {
     float iou_duplicate_threshold_;
     std::string output_frame_id_;
     int landmark_type_;
-    int landmark_subtype_;
 
     // camera data (owned by node, passed to estimator and depth functions)
     ImageProperties color_props_{};

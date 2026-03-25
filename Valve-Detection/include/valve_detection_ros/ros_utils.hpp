@@ -22,11 +22,11 @@ geometry_msgs::msg::PoseArray make_pose_array(
     const std_msgs::msg::Header& header);
 
 // Builds a LandmarkArray message from a list of poses.
+// Subtype is always 0 (unset); resolved downstream by valve_subtype_resolver.
 vortex_msgs::msg::LandmarkArray make_landmark_array(
     const std::vector<Pose>& poses,
     const std_msgs::msg::Header& header,
-    int type,
-    int subtype);
+    int type);
 
 // Decodes a ROS depth image to a CV_32FC1 mat in metres.
 cv::Mat decode_depth_to_float(
