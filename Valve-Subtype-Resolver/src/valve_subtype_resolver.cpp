@@ -16,13 +16,11 @@ using std::placeholders::_1;
 ValveSubtypeResolverNode::ValveSubtypeResolverNode(
     const rclcpp::NodeOptions& options)
     : Node("valve_subtype_resolver_node", options) {
-    const std::string drone =
-        declare_parameter<std::string>("drone", "moby");
+    const std::string drone = declare_parameter<std::string>("drone", "moby");
     const std::string odom_frame_base =
         declare_parameter<std::string>("odom_frame", "odom");
     world_frame_ = drone + "/" + odom_frame_base;
-    vertical_threshold_ =
-        declare_parameter<double>("vertical_threshold", 0.5);
+    vertical_threshold_ = declare_parameter<double>("vertical_threshold", 0.5);
 
     const auto landmarks_in = declare_parameter<std::string>(
         "landmarks_sub_topic", "/valve_landmarks");
@@ -30,8 +28,7 @@ ValveSubtypeResolverNode::ValveSubtypeResolverNode(
         "landmarks_pub_topic", "/valve_landmarks_typed");
 
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
-    tf_listener_ =
-        std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+    tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
     const auto qos = rclcpp::QoS(rclcpp::KeepLast(10))
                          .reliability(RMW_QOS_POLICY_RELIABILITY_BEST_EFFORT);

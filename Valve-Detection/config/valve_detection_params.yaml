@@ -132,4 +132,3 @@
     # Prepended to all TF frame names (e.g. "moby" → "moby/front_camera_depth_optical").
     # Override at launch time to switch between robots: drone:=orca
     drone: "moby"
-

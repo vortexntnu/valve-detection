@@ -17,13 +17,11 @@ class ValveSubtypeResolverNode : public rclcpp::Node {
     explicit ValveSubtypeResolverNode(const rclcpp::NodeOptions& options);
 
    private:
-    void landmarks_cb(
-        const vortex_msgs::msg::LandmarkArray::SharedPtr msg);
+    void landmarks_cb(const vortex_msgs::msg::LandmarkArray::SharedPtr msg);
 
     // Uses the TF tree to rotate the valve plane normal into the world frame,
     // then returns VALVE_VERTICAL (1), VALVE_HORIZONTAL (2), or 0 (unknown).
-    int resolve_subtype(
-        const vortex_msgs::msg::Landmark& landmark);
+    int resolve_subtype(const vortex_msgs::msg::Landmark& landmark);
 
     // TF2
     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -31,8 +29,7 @@ class ValveSubtypeResolverNode : public rclcpp::Node {
 
     rclcpp::Subscription<vortex_msgs::msg::LandmarkArray>::SharedPtr
         landmark_sub_;
-    rclcpp::Publisher<vortex_msgs::msg::LandmarkArray>::SharedPtr
-        landmark_pub_;
+    rclcpp::Publisher<vortex_msgs::msg::LandmarkArray>::SharedPtr landmark_pub_;
 
     std::string world_frame_;
 
