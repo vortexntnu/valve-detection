@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 project(valve_detection)
 
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD 20)
 endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
@@ -24,6 +24,7 @@ find_package(PCL REQUIRED)
 find_package(pcl_conversions REQUIRED)
 
 find_package(vortex_msgs REQUIRED)
+find_package(vortex_utils REQUIRED)
 
 include_directories(include)
 
@@ -60,6 +61,7 @@ ament_target_dependencies(${LIB_NAME} PUBLIC
   OpenCV
   pcl_conversions
   vortex_msgs
+  vortex_utils
 )
 
 rclcpp_components_register_node(

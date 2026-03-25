@@ -283,8 +283,8 @@ void ValvePoseNode::sync_cb(
     if (publish_colormap) {
         for (size_t i = 0; i < raw_boxes.size(); ++i) {
             const auto& box = raw_boxes[i];
-            const float Z = (i < poses.size() && poses[i].position.z() > 0.0f)
-                                ? poses[i].position.z()
+            const float Z = (i < poses.size() && poses[i].z > 0.0)
+                                ? static_cast<float>(poses[i].z)
                                 : 0.0f;
 
             const float angle_deg =

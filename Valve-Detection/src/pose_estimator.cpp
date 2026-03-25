@@ -341,10 +341,11 @@ PoseResult PoseEstimator::compute_pose_from_depth(
         if (pos.isZero())
             return {};
 
-        out.result.position = shift_point_along_normal(pos, normal);
+        const Eigen::Vector3f pos_shifted = shift_point_along_normal(pos, normal);
         const Eigen::Matrix3f rot = create_rotation_matrix_depth(
             coeff, normal, bbox_org.theta, O_d, R_dc);
-        out.result.orientation = Eigen::Quaternionf(rot).normalized();
+        out.result = Pose::from_eigen(pos_shifted.cast<double>(),
+                                      Eigen::Quaternionf(rot).normalized().cast<double>());
     } else {
         const Eigen::Vector3f ray = get_ray_direction(bbox_org);
         const Eigen::Vector3f normal = compute_plane_normal(coeff, ray);
@@ -355,10 +356,11 @@ PoseResult PoseEstimator::compute_pose_from_depth(
         if (pos.isZero())
             return {};
 
-        out.result.position = shift_point_along_normal(pos, normal);
+        const Eigen::Vector3f pos_shifted = shift_point_along_normal(pos, normal);
         const Eigen::Matrix3f rot =
             create_rotation_matrix(coeff, normal, bbox_org.theta);
-        out.result.orientation = Eigen::Quaternionf(rot).normalized();
+        out.result = Pose::from_eigen(pos_shifted.cast<double>(),
+                                      Eigen::Quaternionf(rot).normalized().cast<double>());
     }
 
     out.result_valid = true;

@@ -2,6 +2,7 @@
 #include <Eigen/Dense>
 #include <array>
 #include <cstdint>
+#include <vortex/utils/types.hpp>
 
 namespace valve_detection {
 
@@ -28,10 +29,7 @@ struct BoundingBox {
     float theta{0};  // radians
 };
 
-struct Pose {
-    Eigen::Vector3f position{Eigen::Vector3f::Zero()};
-    Eigen::Quaternionf orientation{Eigen::Quaternionf::Identity()};
-};
+using Pose = vortex::utils::types::Pose;
 
 struct PoseResult {
     Pose result;

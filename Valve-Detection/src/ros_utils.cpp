@@ -24,13 +24,13 @@ geometry_msgs::msg::PoseArray make_pose_array(
     msg.poses.reserve(poses.size());
     for (const auto& p : poses) {
         geometry_msgs::msg::Pose po;
-        po.position.x = p.position.x();
-        po.position.y = p.position.y();
-        po.position.z = p.position.z();
-        po.orientation.x = p.orientation.x();
-        po.orientation.y = p.orientation.y();
-        po.orientation.z = p.orientation.z();
-        po.orientation.w = p.orientation.w();
+        po.position.x = p.x;
+        po.position.y = p.y;
+        po.position.z = p.z;
+        po.orientation.x = p.qx;
+        po.orientation.y = p.qy;
+        po.orientation.z = p.qz;
+        po.orientation.w = p.qw;
         msg.poses.push_back(po);
     }
     return msg;
@@ -49,13 +49,13 @@ vortex_msgs::msg::LandmarkArray make_landmark_array(
         lm.id = static_cast<int32_t>(i);
         lm.type.value = type;
         lm.subtype.value = 0;  // unset — resolved by valve_subtype_resolver
-        lm.pose.pose.position.x = poses[i].position.x();
-        lm.pose.pose.position.y = poses[i].position.y();
-        lm.pose.pose.position.z = poses[i].position.z();
-        lm.pose.pose.orientation.x = poses[i].orientation.x();
-        lm.pose.pose.orientation.y = poses[i].orientation.y();
-        lm.pose.pose.orientation.z = poses[i].orientation.z();
-        lm.pose.pose.orientation.w = poses[i].orientation.w();
+        lm.pose.pose.position.x = poses[i].x;
+        lm.pose.pose.position.y = poses[i].y;
+        lm.pose.pose.position.z = poses[i].z;
+        lm.pose.pose.orientation.x = poses[i].qx;
+        lm.pose.pose.orientation.y = poses[i].qy;
+        lm.pose.pose.orientation.z = poses[i].qz;
+        lm.pose.pose.orientation.w = poses[i].qw;
         out.landmarks.push_back(lm);
     }
     return out;
